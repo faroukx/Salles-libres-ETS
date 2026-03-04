@@ -18,10 +18,10 @@ app = FastAPI(
     openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
 
-# --- CONFIGURATION CORS (INDISPENSABLE POUR L'UPLOAD DEPUIS LE FRONTEND) ---
+# --- CONFIGURATION CORS ---
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Autorise toutes les origines pour le développement local
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -40,14 +40,13 @@ async def log_requests(request: Request, call_next):
 app.include_router(api_v1_router, prefix=settings.API_V1_STR)
 
 # --- SERVIR LES FICHIERS STATIQUES (FRONTEND) ---
-# Le dossier "static" doit être dans le dossier "app"
 static_path = os.path.join(os.path.dirname(__file__), "static")
 
 # On vérifie si le dossier static existe avant de le monter
 if os.path.exists(static_path):
     app.mount("/static", StaticFiles(directory=static_path), name="static")
 
-# Route principale qui sert l'interface index.html
+# Route principale qui sert l'interface publique
 @app.get("/")
 async def read_index():
     index_file = os.path.join(static_path, "index.html")
@@ -56,6 +55,17 @@ async def read_index():
     return JSONResponse(
         status_code=404,
         content={"message": "Erreur : Fichier index.html non trouvé dans app/static/"}
+    )
+
+# Route Admin
+@app.get("/admin")
+async def read_admin():
+    admin_file = os.path.join(static_path, "admin.html")
+    if os.path.exists(admin_file):
+        return FileResponse(admin_file)
+    return JSONResponse(
+        status_code=404,
+        content={"message": "Erreur : Fichier admin.html non trouvé dans app/static/"}
     )
 
 # Gestionnaire d'erreurs global

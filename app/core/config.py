@@ -8,6 +8,10 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "sqlite:///./ets_rooms.db"
     UPLOAD_DIR: str = "./data/uploads"
     LOG_LEVEL: str = "INFO"
+    
+    # Le mot de passe sera lu depuis la variable d'environnement ADMIN_PASSWORD sur Render.
+    # Si elle n'est pas définie, une valeur par défaut est utilisée (pour le développement local).
+    ADMIN_PASSWORD: str = os.getenv("ADMIN_PASSWORD", "SAAd.20034Company!")
 
     class Config:
         env_file = ".env"

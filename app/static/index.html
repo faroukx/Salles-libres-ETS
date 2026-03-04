@@ -52,56 +52,22 @@
                 <div class="bg-red-600 p-2 rounded-xl shadow-lg shadow-red-600/20">
                     <i class="fas fa-bolt text-white"></i>
                 </div>
-                <h1 class="text-xl font-bold text-slate-800 dark:text-white hidden sm:block">Salles libres <span class="text-red-600 font-black">ÉTS</span></h1>
+                <h1 class="text-xl font-bold text-slate-800 dark:text-white">Salles libres <span class="text-red-600 font-black">ÉTS</span></h1>
             </div>
             
-            <div class="flex items-center space-x-2 sm:space-x-4">
-                <!-- Quick Find -->
-                <button id="quick-find" class="bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm px-3 sm:px-5 py-2 rounded-full font-bold transition-all flex items-center shadow-lg shadow-red-600/30">
-                    <i class="fas fa-bolt mr-2"></i>Urgence Étude
+            <div class="flex items-center space-x-2">
+                <button id="theme-toggle" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">
+                    <i id="theme-icon" class="fas fa-moon"></i>
                 </button>
-
-                <div class="h-6 w-px bg-slate-200 dark:bg-slate-800 hidden md:block"></div>
-
-                <!-- Theme & View -->
-                <div class="flex items-center space-x-2">
-                    <button id="theme-toggle" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">
-                        <i id="theme-icon" class="fas fa-moon"></i>
-                    </button>
-                    <div class="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
-                        <button id="view-grid" class="p-2 rounded-lg transition-all"><i class="fas fa-th-large"></i></button>
-                        <button id="view-list" class="p-2 rounded-lg transition-all"><i class="fas fa-list"></i></button>
-                    </div>
+                <div class="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl hidden sm:flex">
+                    <button id="view-grid" class="p-2 rounded-lg transition-all bg-white dark:bg-slate-700 shadow-sm"><i class="fas fa-th-large"></i></button>
+                    <button id="view-list" class="p-2 rounded-lg transition-all"><i class="fas fa-list"></i></button>
                 </div>
-
-                <a href="https://www.etsmtl.ca/etudier-a-lets/inscription-aux-cours/horaire-cours" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white p-2 sm:px-4 sm:py-2 rounded-xl font-medium transition-colors text-xs sm:text-sm">
-                    <i class="fas fa-calendar-alt sm:mr-2"></i><span class="hidden sm:inline">Horaire Officiel</span>
-                </a>
-                <button onclick="document.getElementById('pdf-input').click()" class="bg-slate-800 dark:bg-slate-700 hover:bg-slate-900 text-white p-2 sm:px-4 sm:py-2 rounded-xl font-medium transition-colors">
-                    <i class="fas fa-plus sm:mr-2"></i><span class="hidden sm:inline">Importer</span>
-                </button>
-                <input type="file" id="pdf-input" class="hidden" accept=".pdf">
             </div>
         </div>
     </header>
 
     <main class="max-w-7xl mx-auto px-4 mt-6">
-        <!-- NOUVEAU : Bloc Gestion de Session -->
-        <div class="mb-6 bg-slate-200/50 dark:bg-slate-800/50 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4 border border-slate-300 dark:border-slate-700">
-            <div class="flex items-center space-x-3">
-                <i class="fas fa-sync-alt text-slate-500"></i>
-                <span class="text-sm font-bold text-slate-600 dark:text-slate-400">GESTION DE SESSION</span>
-            </div>
-            <div class="flex items-center gap-3">
-                <button onclick="clearSessionData()" class="bg-white dark:bg-slate-900 text-red-600 border border-red-200 dark:border-red-900/30 px-4 py-2 rounded-xl text-xs font-black hover:bg-red-50 dark:hover:bg-red-900/20 transition-all">
-                    <i class="fas fa-trash-alt mr-2"></i>NETTOYER LA SESSION
-                </button>
-                <button onclick="syncEtsSchedules()" class="bg-slate-800 dark:bg-slate-700 text-white px-4 py-2 rounded-xl text-xs font-black hover:bg-slate-900 transition-all">
-                    <i class="fas fa-cloud-download-alt mr-2"></i>SYNCHRONISER L'HORAIRE ÉTS
-                </button>
-            </div>
-        </div>
-
         <!-- Dashboard / Filtres -->
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 mb-8 shadow-xl shadow-slate-200/50 dark:shadow-none transition-colors">
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -126,379 +92,210 @@
                     </div>
                 </div>
 
-                <!-- Section Pavillons & Densité -->
+                <!-- Section Pavillons -->
                 <div class="lg:col-span-5">
-                    <label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-4">Pavillons & Densité d'occupation</label>
+                    <label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-4">Pavillons</label>
                     <div class="grid grid-cols-3 sm:grid-cols-6 gap-3" id="pavillon-filters">
-                        <div class="space-y-2">
-                            <button data-pav="ALL" class="filter-btn active w-full py-3 rounded-2xl text-sm font-black transition-all bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">Tous</button>
-                            <div class="h-1 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden"><div id="density-ALL" class="h-full bg-red-500 transition-all duration-1000" style="width: 0%"></div></div>
-                        </div>
-                        <div class="space-y-2">
-                            <button data-pav="A" class="filter-btn w-full py-3 rounded-2xl text-sm font-black transition-all bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">A</button>
-                            <div class="h-1 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden"><div id="density-A" class="h-full bg-red-500 transition-all duration-1000" style="width: 0%"></div></div>
-                        </div>
-                        <div class="space-y-2">
-                            <button data-pav="B" class="filter-btn w-full py-3 rounded-2xl text-sm font-black transition-all bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">B</button>
-                            <div class="h-1 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden"><div id="density-B" class="h-full bg-red-500 transition-all duration-1000" style="width: 0%"></div></div>
-                        </div>
-                        <div class="space-y-2">
-                            <button data-pav="D" class="filter-btn w-full py-3 rounded-2xl text-sm font-black transition-all bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">D</button>
-                            <div class="h-1 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden"><div id="density-D" class="h-full bg-red-500 transition-all duration-1000" style="width: 0%"></div></div>
-                        </div>
-                        <div class="space-y-2">
-                            <button data-pav="E" class="filter-btn w-full py-3 rounded-2xl text-sm font-black transition-all bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">E</button>
-                            <div class="h-1 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden"><div id="density-E" class="h-full bg-red-500 transition-all duration-1000" style="width: 0%"></div></div>
-                        </div>
-                        <div class="space-y-2">
-                            <button data-pav="F" class="filter-btn w-full py-3 rounded-2xl text-sm font-black transition-all bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">F</button>
-                            <div class="h-1 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden"><div id="density-F" class="h-full bg-red-500 transition-all duration-1000" style="width: 0%"></div></div>
-                        </div>
+                        <button data-pav="ALL" class="filter-btn active py-3 rounded-2xl text-sm font-black transition-all bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">Tous</button>
+                        <button data-pav="A" class="filter-btn py-3 rounded-2xl text-sm font-black transition-all bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">A</button>
+                        <button data-pav="B" class="filter-btn py-3 rounded-2xl text-sm font-black transition-all bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">B</button>
+                        <button data-pav="D" class="filter-btn py-3 rounded-2xl text-sm font-black transition-all bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">D</button>
+                        <button data-pav="E" class="filter-btn py-3 rounded-2xl text-sm font-black transition-all bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">E</button>
                     </div>
                 </div>
 
-                <!-- Section État & Étage -->
-                <div class="lg:col-span-3 space-y-6">
-                    <div>
-                        <label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-3">Statut</label>
-                        <div class="flex flex-col space-y-2 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl">
-                            <button id="filter-libre" class="state-btn libre active py-2 rounded-xl text-xs font-black transition-all">LIBRE</button>
-                            <button id="filter-occupe" class="state-btn occupe active py-2 rounded-xl text-xs font-black transition-all">OCCUPÉ</button>
-                        </div>
+                <!-- Section État -->
+                <div class="lg:col-span-3">
+                    <label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-4">État de la salle</label>
+                    <div class="flex bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl">
+                        <button data-state="ALL" class="state-btn active w-full py-2.5 rounded-xl text-xs font-black transition-all">TOUT</button>
+                        <button data-state="FREE" class="state-btn libre w-full py-2.5 rounded-xl text-xs font-black transition-all">LIBRE</button>
+                        <button data-state="BUSY" class="state-btn occupe w-full py-2.5 rounded-xl text-xs font-black transition-all">OCCUPÉ</button>
                     </div>
-                    <div>
-                        <label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-2">Étage</label>
-                        <select id="floor-filter" class="w-full px-4 py-3 bg-slate-100 dark:bg-slate-800 border-none rounded-2xl outline-none text-sm font-black dark:text-white cursor-pointer">
-                            <option value="ALL">Tous les étages</option>
-                            <option value="1">1er étage</option>
-                            <option value="2">2e étage</option>
-                            <option value="3">3e étage</option>
-                            <option value="4">4e étage</option>
-                            <option value="5">5e étage</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <div class="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4">
-                <div class="flex items-center space-x-4">
-                    <div class="flex items-center space-x-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                        <span>Trier par</span>
-                        <select id="sort-select" class="bg-transparent border-none outline-none text-slate-800 dark:text-white font-black cursor-pointer dark:bg-slate-900">
-                            <option value="status">Disponibilité</option>
-                            <option value="name">Nom du local</option>
-                            <option value="duration">Durée restante</option>
-                        </select>
-                    </div>
-                </div>
-                <div id="results-count" class="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.3em]">
-                    CHARGEMENT...
                 </div>
             </div>
         </div>
 
         <!-- Résultats -->
-        <div id="results-container" class="transition-opacity duration-300"></div>
+        <div id="rooms-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            <!-- Les cartes de salles seront injectées ici -->
+        </div>
 
         <!-- État vide -->
-        <div id="empty-state" class="hidden text-center py-32">
-            <div class="w-24 h-24 bg-slate-100 dark:bg-slate-900 text-slate-300 dark:text-slate-700 rounded-full flex items-center justify-center mx-auto mb-6">
-                <i class="fas fa-ghost text-4xl"></i>
+        <div id="empty-state" class="hidden flex flex-col items-center justify-center py-20 text-center">
+            <div class="bg-slate-100 dark:bg-slate-800 p-8 rounded-full mb-6">
+                <i class="fas fa-search text-4xl text-slate-300 dark:text-slate-600"></i>
             </div>
-            <h3 class="text-xl font-black text-slate-800 dark:text-white mb-2">Aucun local à l'horizon</h3>
-            <p class="text-slate-500 dark:text-slate-400 max-w-xs mx-auto">Ajustez vos filtres ou tentez une autre heure de recherche.</p>
+            <h3 class="text-xl font-bold text-slate-800 dark:text-white mb-2">Aucune salle trouvée</h3>
+            <p class="text-slate-500 dark:text-slate-400 max-w-xs">Essayez de modifier vos filtres ou votre recherche.</p>
         </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="max-w-7xl mx-auto px-4 mt-12 mb-8 text-center">
-        <p class="text-xs text-slate-400 dark:text-slate-600">Les horaires proviennent du site officiel de l'ÉTS : <a href="https://www.etsmtl.ca/etudier-a-lets/inscription-aux-cours/horaire-cours" target="_blank" class="underline hover:text-red-500 transition-colors">etsmtl.ca/horaire-cours</a></p>
-        <p class="text-[10px] text-slate-300 dark:text-slate-700 mt-1">Version locale : déposez vos PDFs dans le dossier <code class="bg-slate-100 dark:bg-slate-800 px-1 rounded">data/uploads/</code></p>
-    </footer>
-
     <script>
-        // Variables Globales
+        // État global
         let allRooms = [];
         let currentPavillon = 'ALL';
-        let currentView = localStorage.getItem('viewMode') || 'grid';
-        let showLibre = true;
-        let showOccupe = true;
+        let currentState = 'ALL';
+        let currentView = 'grid';
 
-        // Fonction de démarrage sécurisée
-        window.onload = function() {
-            try {
-                initTheme();
-                initTime();
-                updateViewButtons();
-                setupEvents();
-                fetchRooms();
-            } catch (e) {
-                console.error("Erreur critique au démarrage:", e);
-                document.getElementById('results-count').innerText = "ERREUR SYSTÈME";
-            }
-        };
-
-        function initTheme() {
-            const theme = localStorage.getItem('theme');
-            const isDark = theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches);
-            if (isDark) {
-                document.documentElement.classList.add('dark');
-                document.getElementById('theme-icon').className = 'fas fa-sun';
-            } else {
-                document.documentElement.classList.remove('dark');
-                document.getElementById('theme-icon').className = 'fas fa-moon';
-            }
-        }
-
-        function toggleTheme() {
-            const isDark = document.documentElement.classList.toggle('dark');
-            localStorage.setItem('theme', isDark ? 'dark' : 'light');
-            document.getElementById('theme-icon').className = isDark ? 'fas fa-sun' : 'fas fa-moon';
-        }
-
-        function initTime() {
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set default date/time
             const now = new Date();
-            const dateInput = document.getElementById('date-input');
-            const timeInput = document.getElementById('time-input');
-            if (dateInput) dateInput.value = now.toISOString().split('T')[0];
-            if (timeInput) timeInput.value = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
-        }
+            document.getElementById('date-input').value = now.toISOString().split('T')[0];
+            document.getElementById('time-input').value = now.toTimeString().slice(0, 5);
 
-        function setupEvents() {
-            document.getElementById('theme-toggle').onclick = toggleTheme;
-            document.getElementById('view-grid').onclick = () => setView('grid');
-            document.getElementById('view-list').onclick = () => setView('list');
-            document.getElementById('search-input').oninput = filterAndDisplay;
-            document.getElementById('date-input').onchange = fetchRooms;
-            document.getElementById('time-input').onchange = fetchRooms;
-            document.getElementById('floor-filter').onchange = filterAndDisplay;
-            document.getElementById('sort-select').onchange = filterAndDisplay;
-            document.getElementById('quick-find').onclick = runQuickFind;
-
+            // Event Listeners
+            document.getElementById('search-input').addEventListener('input', filterRooms);
+            document.getElementById('date-input').addEventListener('change', fetchRooms);
+            document.getElementById('time-input').addEventListener('change', fetchRooms);
+            
             document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.onclick = function() {
+                btn.addEventListener('click', (e) => {
                     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-                    this.classList.add('active');
-                    currentPavillon = this.getAttribute('data-pav');
-                    filterAndDisplay();
-                };
+                    btn.classList.add('active');
+                    currentPavillon = btn.dataset.pav;
+                    filterRooms();
+                });
             });
 
-            document.getElementById('filter-libre').onclick = function() {
-                showLibre = !showLibre;
-                this.classList.toggle('active', showLibre);
-                filterAndDisplay();
-            };
-            document.getElementById('filter-occupe').onclick = function() {
-                showOccupe = !showOccupe;
-                this.classList.toggle('active', showOccupe);
-                filterAndDisplay();
-            };
+            document.querySelectorAll('.state-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('.state-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentState = btn.dataset.state;
+                    filterRooms();
+                });
+            });
 
-            document.getElementById('pdf-input').onchange = function(e) {
-                if (this.files.length > 0) handleFileUpload(this.files[0]);
-            };
-        }
+            document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+            document.getElementById('view-grid').addEventListener('click', () => setView('grid'));
+            document.getElementById('view-list').addEventListener('click', () => setView('list'));
+
+            // Initial fetch
+            fetchRooms();
+            
+            // Auto-refresh every minute
+            setInterval(fetchRooms, 60000);
+        });
 
         async function fetchRooms() {
             const date = document.getElementById('date-input').value;
             const time = document.getElementById('time-input').value;
-            const countEl = document.getElementById('results-count');
             
-            if (!date || !time) return;
-            
-            countEl.innerText = "CHARGEMENT...";
             try {
-                const res = await fetch(`/api/v1/available-rooms?date=${date}&time=${time}`);
-                if (res.ok) {
-                    allRooms = await res.json();
-                    updateDensities();
-                    filterAndDisplay();
-                } else {
-                    countEl.innerText = "ERREUR API";
-                }
-            } catch (err) {
-                console.error(err);
-                countEl.innerText = "ERREUR CONNEXION";
+                const response = await fetch(`/api/v1/available-rooms?date=${date}&time=${time}`);
+                allRooms = await response.json();
+                filterRooms();
+            } catch (error) {
+                console.error('Erreur lors de la récupération des salles:', error);
             }
         }
 
-        // --- NOUVELLES FONCTIONS DE GESTION DE SESSION ---
-        async function clearSessionData() {
-            if (!confirm("⚠️ Voulez-vous vraiment supprimer TOUS les horaires et locaux ? Cette action est irréversible.")) return;
+        function filterRooms() {
+            const searchTerm = document.getElementById('search-input').value.toLowerCase();
             
-            const btn = event.target;
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>NETTOYAGE...';
-            btn.disabled = true;
-
-            try {
-                const res = await fetch('/api/v1/clear-data', { method: 'DELETE' });
-                if (res.ok) {
-                    alert("✅ Base de données nettoyée avec succès !");
-                    location.reload();
-                } else {
-                    alert("❌ Erreur lors du nettoyage.");
-                }
-            } catch (e) {
-                alert("❌ Erreur de connexion au serveur.");
-            } finally {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            }
-        }
-
-        async function syncEtsSchedules() {
-            const btn = event.target;
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>SYNCHRONISATION...';
-            btn.disabled = true;
-
-            try {
-                const res = await fetch('/api/v1/sync-ets', { method: 'POST' });
-                const data = await res.json();
-                if (res.ok) {
-                    alert("✅ Synchronisation terminée !\n" + (data.message || "Les horaires ont été mis à jour."));
-                    location.reload();
-                } else {
-                    alert("❌ Erreur : " + (data.detail || "La synchronisation a échoué. Vérifiez votre connexion internet."));
-                }
-            } catch (e) {
-                alert("❌ Erreur de connexion au serveur.");
-            } finally {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            }
-        }
-
-        function filterAndDisplay() {
-            const search = document.getElementById('search-input').value.toUpperCase();
-            const floor = document.getElementById('floor-filter').value;
-            const sort = document.getElementById('sort-select').value;
-
-            let filtered = allRooms.filter(r => {
-                const matchesSearch = r.room_name.includes(search) || 
-                                    (r.current_course_code && r.current_course_code.toUpperCase().includes(search)) ||
-                                    (r.next_course_code && r.next_course_code.toUpperCase().includes(search));
-                const matchesPav = currentPavillon === 'ALL' || r.room_name.startsWith(currentPavillon);
-                const matchesFloor = floor === 'ALL' || (r.room_name.split('-')[1] || '').startsWith(floor);
-                const matchesState = (r.is_available && showLibre) || (!r.is_available && showOccupe);
-                return matchesSearch && matchesPav && matchesFloor && matchesState;
+            const filtered = allRooms.filter(room => {
+                const matchesSearch = room.room_name.toLowerCase().includes(searchTerm);
+                const matchesPavillon = currentPavillon === 'ALL' || room.room_name.startsWith(currentPavillon);
+                const matchesState = currentState === 'ALL' || 
+                                   (currentState === 'FREE' && room.is_available) || 
+                                   (currentState === 'BUSY' && !room.is_available);
+                
+                return matchesSearch && matchesPavillon && matchesState;
             });
 
-            filtered.sort((a, b) => {
-                if (sort === 'name') return a.room_name.localeCompare(b.room_name);
-                if (sort === 'duration') return (b.remaining_duration_minutes || 0) - (a.remaining_duration_minutes || 0);
-                if (a.is_available !== b.is_available) return a.is_available ? -1 : 1;
-                return (b.remaining_duration_minutes || 0) - (a.remaining_duration_minutes || 0);
-            });
-
-            render(filtered);
+            renderRooms(filtered);
         }
 
-        function render(rooms) {
-            const container = document.getElementById('results-container');
-            const empty = document.getElementById('empty-state');
-            document.getElementById('results-count').innerText = rooms.length + " LOCAUX TROUVÉS";
-
+        function renderRooms(rooms) {
+            const container = document.getElementById('rooms-container');
+            const emptyState = document.getElementById('empty-state');
+            
             if (rooms.length === 0) {
-                container.innerHTML = "";
-                empty.classList.remove('hidden');
+                container.innerHTML = '';
+                emptyState.classList.remove('hidden');
                 return;
             }
-            empty.classList.add('hidden');
 
+            emptyState.classList.add('hidden');
+            
             if (currentView === 'grid') {
-                let html = '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">';
-                rooms.forEach(r => {
-                    const isLab = r.room_name.startsWith('A') || r.room_name.startsWith('B');
-                    const courseCode = r.is_available ? (r.next_course_code || 'Aucun cours') : (r.current_course_code || 'Occupé');
-                    html += `
-                        <div class="room-card bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm hover:shadow-xl transition-all relative overflow-hidden">
-                            <div class="flex justify-between items-start mb-6">
-                                <div>
-                                    <h3 class="text-3xl font-black text-slate-800 dark:text-white tracking-tighter">${r.room_name}</h3>
-                                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">${isLab ? '🤫 Labo' : '🤫 Classe'}</p>
-                                    <p class="text-xs font-bold ${r.is_available ? 'text-slate-500' : 'text-red-500'} mt-1">${courseCode}</p>
-                                </div>
-                                <div class="w-3 h-3 rounded-full ${r.is_available ? 'bg-green-500 shadow-[0_0_12px_rgba(34,197,94,0.6)]' : 'bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.6)]'}"></div>
+                container.className = "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6";
+                container.innerHTML = rooms.map(room => `
+                    <div class="room-card bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm hover:shadow-xl transition-all">
+                        <div class="flex justify-between items-start mb-6">
+                            <div>
+                                <h3 class="text-2xl font-black text-slate-800 dark:text-white">${room.room_name}</h3>
+                                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Pavillon ${room.room_name[0]}</p>
                             </div>
-                            <div class="space-y-4">
-                                <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase">
-                                    <span>Timeline (3h)</span>
-                                    <span class="${r.is_available ? 'text-green-500' : 'text-red-500'}">${r.is_available ? 'LIBRE' : 'OCCUPÉ'}</span>
+                            <span class="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter ${room.is_available ? 'bg-green-100 text-green-600 dark:bg-green-900/30' : 'bg-red-100 text-red-600 dark:bg-red-900/30'}">
+                                ${room.is_available ? 'Libre' : 'Occupé'}
+                            </span>
+                        </div>
+                        
+                        ${!room.is_available && room.current_course ? `
+                            <div class="mb-6 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700">
+                                <div class="flex items-center text-red-500 mb-2">
+                                    <i class="fas fa-graduation-cap mr-2 text-xs"></i>
+                                    <span class="text-[10px] font-black uppercase tracking-widest">Cours en cours</span>
                                 </div>
-                                ${getTimeline(r)}
-                                <div class="pt-4 border-t border-slate-50 dark:border-slate-800 flex justify-between items-end">
-                                    <div>
-                                        <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">${r.is_available ? 'Jusqu\'à' : 'Prochaine'}</p>
-                                        <p class="text-lg font-black text-slate-800 dark:text-white">${r.free_until.substring(0, 5)}</p>
-                                    </div>
-                                    <div class="text-right">
-                                        <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">Restant</p>
-                                        <p class="text-sm font-black text-slate-600 dark:text-slate-400">${r.remaining_duration_minutes} min</p>
-                                    </div>
-                                </div>
+                                <p class="font-bold text-slate-700 dark:text-slate-200">${room.current_course}</p>
                             </div>
-                        </div>`;
-                });
-                container.innerHTML = html + '</div>';
+                        ` : `
+                            <div class="mb-6 p-4 bg-green-50 dark:bg-green-900/10 rounded-2xl border border-green-100 dark:border-green-900/20">
+                                <div class="flex items-center text-green-600 mb-1">
+                                    <i class="fas fa-check-circle mr-2 text-xs"></i>
+                                    <span class="text-[10px] font-black uppercase tracking-widest">Disponible</span>
+                                </div>
+                                <p class="text-xs text-green-700 dark:text-green-400 font-medium">Aucun cours pour le moment</p>
+                            </div>
+                        `}
+
+                        <div class="flex items-center justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
+                            <div class="flex items-center">
+                                <i class="far fa-clock mr-2"></i>
+                                <span>Prochain cours: ${room.next_course_time || 'Aucun'}</span>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
             } else {
-                let html = '<div class="overflow-hidden bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl"><table class="w-full text-left border-collapse"><thead class="bg-slate-50 dark:bg-slate-800/50"><tr><th class="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Local</th><th class="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Timeline</th><th class="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Détails</th><th class="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Durée</th></tr></thead><tbody class="divide-y divide-slate-100 dark:divide-slate-800">';
-                rooms.forEach(r => {
-                    const isLab = r.room_name.startsWith('A') || r.room_name.startsWith('B');
-                    html += `<tr><td class="px-8 py-6"><div class="font-black text-lg text-slate-800 dark:text-white">${r.room_name}</div><div class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">${isLab ? '🤫 Labo' : '🤫 Classe'}</div></td><td class="px-8 py-6 w-1/3">${getTimeline(r)}</td><td class="px-8 py-6"><span class="px-3 py-1 rounded-full text-[10px] font-black uppercase ${r.is_available ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400'}">${r.is_available ? 'Libre' : 'Occupé'}</span> <span class="ml-2 text-sm font-bold text-slate-600 dark:text-slate-400">${r.current_course_code || r.next_course_code || ''}</span></td><td class="px-8 py-6 text-right font-black">${r.remaining_duration_minutes} min</td></tr>`;
-                });
-                container.innerHTML = html + '</tbody></table></div>';
+                container.className = "flex flex-col space-y-3";
+                container.innerHTML = rooms.map(room => `
+                    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex items-center justify-between shadow-sm">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-black text-slate-700 dark:text-slate-300">
+                                ${room.room_name}
+                            </div>
+                            <div>
+                                <p class="font-bold text-slate-800 dark:text-white">${room.is_available ? 'Libre' : room.current_course}</p>
+                                <p class="text-[10px] text-slate-400 font-bold uppercase">Prochain: ${room.next_course_time || 'N/A'}</p>
+                            </div>
+                        </div>
+                        <span class="w-3 h-3 rounded-full ${room.is_available ? 'bg-green-500 shadow-lg shadow-green-500/50' : 'bg-red-500 shadow-lg shadow-red-500/50'}"></span>
+                    </div>
+                `).join('');
             }
         }
 
-        function getTimeline(r) {
-            const free = Math.min(100, (r.remaining_duration_minutes / 180) * 100);
-            if (r.is_available) return `<div class="timeline-bar"><div class="timeline-segment timeline-free" style="width: ${free}%"></div><div class="timeline-segment timeline-busy" style="width: ${100-free}%"></div></div>`;
-            return `<div class="timeline-bar"><div class="timeline-segment timeline-busy" style="width: 40%"></div><div class="timeline-segment timeline-free" style="width: 60%"></div></div>`;
+        function toggleTheme() {
+            document.documentElement.classList.toggle('dark');
+            const icon = document.getElementById('theme-icon');
+            if (document.documentElement.classList.contains('dark')) {
+                icon.className = 'fas fa-sun';
+            } else {
+                icon.className = 'fas fa-moon';
+            }
         }
 
-        function setView(v) {
-            currentView = v;
-            localStorage.setItem('viewMode', v);
-            updateViewButtons();
-            filterAndDisplay();
-        }
-
-        function updateViewButtons() {
-            const g = document.getElementById('view-grid');
-            const l = document.getElementById('view-list');
-            if (g) g.className = 'p-2 rounded-lg transition-all ' + (currentView === 'grid' ? 'bg-white dark:bg-slate-700 shadow-md text-red-600' : 'text-slate-400');
-            if (l) l.className = 'p-2 rounded-lg transition-all ' + (currentView === 'list' ? 'bg-white dark:bg-slate-700 shadow-md text-red-600' : 'text-slate-400');
-        }
-
-        function updateDensities() {
-            ['A', 'B', 'D', 'E', 'F', 'ALL'].forEach(p => {
-                const rs = p === 'ALL' ? allRooms : allRooms.filter(r => r.room_name.startsWith(p));
-                const occ = rs.filter(r => !r.is_available).length;
-                const d = rs.length > 0 ? (occ / rs.length) * 100 : 0;
-                const el = document.getElementById('density-' + p);
-                if (el) el.style.width = d + '%';
-            });
-        }
-
-        function runQuickFind() {
-            const free = allRooms.filter(r => r.is_available);
-            if (free.length === 0) return alert("Aucun local libre !");
-            const best = free.reduce((p, c) => (p.remaining_duration_minutes > c.remaining_duration_minutes) ? p : c);
-            document.getElementById('search-input').value = best.room_name;
-            showLibre = true;
-            document.getElementById('filter-libre').classList.add('active');
-            filterAndDisplay();
-        }
-
-        async function handleFileUpload(f) {
-            const fd = new FormData(); fd.append('file', f);
-            try {
-                const res = await fetch('/api/v1/upload-pdf?semester=Session', { method: 'POST', body: fd });
-                if (res.ok) { fetchRooms(); alert("✅ Importé avec succès !"); }
-            } catch (e) { alert("❌ Erreur lors de l'importation."); }
+        function setView(view) {
+            currentView = view;
+            document.getElementById('view-grid').classList.toggle('bg-white', view === 'grid');
+            document.getElementById('view-grid').classList.toggle('dark:bg-slate-700', view === 'grid');
+            document.getElementById('view-list').classList.toggle('bg-white', view === 'list');
+            document.getElementById('view-list').classList.toggle('dark:bg-slate-700', view === 'list');
+            filterRooms();
         }
     </script>
 </body>

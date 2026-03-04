@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query, Header
 from sqlalchemy.orm import Session
 from datetime import date, time, datetime
 from typing import List, Optional
@@ -12,6 +12,12 @@ from app.core.config import settings
 from loguru import logger
 
 router = APIRouter()
+
+def verify_admin(x_admin_password: Optional[str] = Header(None)):
+    """Vérifie si le mot de passe admin est correct."""
+    if x_admin_password != settings.ADMIN_PASSWORD:
+        raise HTTPException(status_code=401, detail="Mot de passe administrateur invalide")
+    return True
 
 @router.get("/rooms", response_model=List[RoomResponse])
 def get_rooms(db: Session = Depends(get_db)):
@@ -37,7 +43,8 @@ def get_available_rooms(
 async def upload_pdf(
     file: UploadFile = File(...),
     semester: str = Query(..., description="Semestre (ex: Hiver 2024)"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    admin: bool = Depends(verify_admin)
 ):
     """Upload un PDF d'horaire, l'analyse et remplit la base de données."""
     if not file.filename.endswith(".pdf"):
@@ -87,7 +94,7 @@ async def upload_pdf(
         raise HTTPException(status_code=500, detail=f"Erreur lors du traitement du PDF: {str(e)}")
 
 @router.post("/reload-data")
-def reload_data(db: Session = Depends(get_db)):
+def reload_data(db: Session = Depends(get_db), admin: bool = Depends(verify_admin)):
     """Scan le dossier d'uploads et recharge tous les PDFs présents en base."""
     try:
         if not os.path.exists(settings.UPLOAD_DIR):
@@ -129,7 +136,7 @@ def reload_data(db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=f"Erreur lors du rechargement: {str(e)}")
 
 @router.post("/sync-ets")
-def sync_ets(db: Session = Depends(get_db)):
+def sync_ets(db: Session = Depends(get_db), admin: bool = Depends(verify_admin)):
     """Télécharge les horaires depuis le site de l'ÉTS et les recharge automatiquement."""
     try:
         from scripts.fetch_schedules import fetch_all_schedules
@@ -141,14 +148,19 @@ def sync_ets(db: Session = Depends(get_db)):
             return {"status": "error", "message": "Aucun horaire n'a pu être téléchargé depuis le site de l'ÉTS."}
             
         # 2. Recharger les données (on réutilise la logique de reload_data)
-        return reload_data(db)
+        return reload_data(db, admin=True)
         
     except Exception as e:
         logger.error(f"Erreur lors de la synchronisation: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Erreur lors de la synchronisation: {str(e)}")
 
 @router.delete("/clear-data")
-def clear_data(db: Session = Depends(get_db)):
+def clear_data(db: Session = Depends(get_db), admin: bool = Depends(verify_admin)):
     """Supprime toutes les données de la base de données."""
     room_service.clear_all_data(db)
     return {"status": "success", "message": "Toutes les données ont été supprimées"}
+
+@router.post("/verify-password")
+def verify_password(admin: bool = Depends(verify_admin)):
+    """Vérifie simplement si le mot de passe est correct."""
+    return {"status": "success", "message": "Mot de passe valide"}
