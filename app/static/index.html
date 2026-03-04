@@ -52,17 +52,31 @@
                 <div class="bg-red-600 p-2 rounded-xl shadow-lg shadow-red-600/20">
                     <i class="fas fa-bolt text-white"></i>
                 </div>
-                <h1 class="text-xl font-bold text-slate-800 dark:text-white">Salles libres <span class="text-red-600 font-black">ÉTS</span></h1>
+                <h1 class="text-xl font-bold text-slate-800 dark:text-white hidden sm:block">Salles libres <span class="text-red-600 font-black">ÉTS</span></h1>
             </div>
             
-            <div class="flex items-center space-x-2">
-                <button id="theme-toggle" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">
-                    <i id="theme-icon" class="fas fa-moon"></i>
+            <div class="flex items-center space-x-2 sm:space-x-4">
+                <!-- Quick Find -->
+                <button id="quick-find" class="bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm px-3 sm:px-5 py-2 rounded-full font-bold transition-all flex items-center shadow-lg shadow-red-600/30">
+                    <i class="fas fa-bolt mr-2"></i>Urgence Étude
                 </button>
-                <div class="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl hidden sm:flex">
-                    <button id="view-grid" class="p-2 rounded-lg transition-all bg-white dark:bg-slate-700 shadow-sm"><i class="fas fa-th-large"></i></button>
-                    <button id="view-list" class="p-2 rounded-lg transition-all"><i class="fas fa-list"></i></button>
+
+                <div class="h-6 w-px bg-slate-200 dark:bg-slate-800 hidden md:block"></div>
+
+                <!-- Theme & View -->
+                <div class="flex items-center space-x-2">
+                    <button id="theme-toggle" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">
+                        <i id="theme-icon" class="fas fa-moon"></i>
+                    </button>
+                    <div class="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+                        <button id="view-grid" class="p-2 rounded-lg transition-all bg-white dark:bg-slate-700 shadow-sm"><i class="fas fa-th-large"></i></button>
+                        <button id="view-list" class="p-2 rounded-lg transition-all"><i class="fas fa-list"></i></button>
+                    </div>
                 </div>
+
+                <a href="https://www.etsmtl.ca/etudier-a-lets/inscription-aux-cours/horaire-cours" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white p-2 sm:px-4 sm:py-2 rounded-xl font-medium transition-colors text-xs sm:text-sm">
+                    <i class="fas fa-calendar-alt sm:mr-2"></i><span class="hidden sm:inline">Horaire Officiel</span>
+                </a>
             </div>
         </div>
     </header>
@@ -92,15 +106,30 @@
                     </div>
                 </div>
 
-                <!-- Section Pavillons -->
+                <!-- Section Pavillons & Densité -->
                 <div class="lg:col-span-5">
-                    <label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-4">Pavillons</label>
+                    <label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-4">Pavillons & Densité d'occupation</label>
                     <div class="grid grid-cols-3 sm:grid-cols-6 gap-3" id="pavillon-filters">
-                        <button data-pav="ALL" class="filter-btn active py-3 rounded-2xl text-sm font-black transition-all bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">Tous</button>
-                        <button data-pav="A" class="filter-btn py-3 rounded-2xl text-sm font-black transition-all bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">A</button>
-                        <button data-pav="B" class="filter-btn py-3 rounded-2xl text-sm font-black transition-all bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">B</button>
-                        <button data-pav="D" class="filter-btn py-3 rounded-2xl text-sm font-black transition-all bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">D</button>
-                        <button data-pav="E" class="filter-btn py-3 rounded-2xl text-sm font-black transition-all bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">E</button>
+                        <div class="space-y-2">
+                            <button data-pav="ALL" class="filter-btn active w-full py-3 rounded-2xl text-sm font-black transition-all bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">Tous</button>
+                            <div class="h-1 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden"><div id="density-ALL" class="h-full bg-red-500 transition-all duration-1000" style="width: 0%"></div></div>
+                        </div>
+                        <div class="space-y-2">
+                            <button data-pav="A" class="filter-btn w-full py-3 rounded-2xl text-sm font-black transition-all bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">A</button>
+                            <div class="h-1 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden"><div id="density-A" class="h-full bg-red-500 transition-all duration-1000" style="width: 0%"></div></div>
+                        </div>
+                        <div class="space-y-2">
+                            <button data-pav="B" class="filter-btn w-full py-3 rounded-2xl text-sm font-black transition-all bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">B</button>
+                            <div class="h-1 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden"><div id="density-B" class="h-full bg-red-500 transition-all duration-1000" style="width: 0%"></div></div>
+                        </div>
+                        <div class="space-y-2">
+                            <button data-pav="D" class="filter-btn w-full py-3 rounded-2xl text-sm font-black transition-all bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">D</button>
+                            <div class="h-1 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden"><div id="density-D" class="h-full bg-red-500 transition-all duration-1000" style="width: 0%"></div></div>
+                        </div>
+                        <div class="space-y-2">
+                            <button data-pav="E" class="filter-btn w-full py-3 rounded-2xl text-sm font-black transition-all bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">E</button>
+                            <div class="h-1 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden"><div id="density-E" class="h-full bg-red-500 transition-all duration-1000" style="width: 0%"></div></div>
+                        </div>
                     </div>
                 </div>
 
@@ -171,6 +200,7 @@
             document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
             document.getElementById('view-grid').addEventListener('click', () => setView('grid'));
             document.getElementById('view-list').addEventListener('click', () => setView('list'));
+            document.getElementById('quick-find').addEventListener('click', findUrgentRoom);
 
             // Initial fetch
             fetchRooms();
@@ -186,10 +216,23 @@
             try {
                 const response = await fetch(`/api/v1/available-rooms?date=${date}&time=${time}`);
                 allRooms = await response.json();
+                updateDensities();
                 filterRooms();
             } catch (error) {
                 console.error('Erreur lors de la récupération des salles:', error);
             }
+        }
+
+        function updateDensities() {
+            const pavillons = ['ALL', 'A', 'B', 'D', 'E'];
+            pavillons.forEach(pav => {
+                const rooms = pav === 'ALL' ? allRooms : allRooms.filter(r => r.room_name.startsWith(pav));
+                if (rooms.length === 0) return;
+                const busy = rooms.filter(r => !r.is_available).length;
+                const density = (busy / rooms.length) * 100;
+                const bar = document.getElementById(`density-${pav}`);
+                if (bar) bar.style.width = `${density}%`;
+            });
         }
 
         function filterRooms() {
@@ -206,6 +249,18 @@
             });
 
             renderRooms(filtered);
+        }
+
+        function findUrgentRoom() {
+            const freeRooms = allRooms.filter(r => r.is_available);
+            if (freeRooms.length > 0) {
+                // Trier par pavillon A, B, D, E
+                freeRooms.sort((a, b) => a.room_name.localeCompare(b.room_name));
+                renderRooms([freeRooms[0]]);
+                document.getElementById('search-input').value = freeRooms[0].room_name;
+            } else {
+                alert("Désolé, aucune salle n'est libre actuellement !");
+            }
         }
 
         function renderRooms(rooms) {
@@ -252,10 +307,15 @@
                             </div>
                         `}
 
-                        <div class="flex items-center justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
-                            <div class="flex items-center">
-                                <i class="far fa-clock mr-2"></i>
-                                <span>Prochain cours: ${room.next_course_time || 'Aucun'}</span>
+                        <div class="space-y-4">
+                            <div class="timeline-bar">
+                                <div class="timeline-segment ${room.is_available ? 'timeline-free' : 'timeline-busy'}" style="width: 100%"></div>
+                            </div>
+                            <div class="flex items-center justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                <div class="flex items-center">
+                                    <i class="far fa-clock mr-2"></i>
+                                    <span>Prochain: ${room.next_course_time || 'Aucun'}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
