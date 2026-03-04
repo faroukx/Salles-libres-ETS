@@ -73,10 +73,6 @@
                         <button id="view-list" class="p-2 rounded-lg transition-all"><i class="fas fa-list"></i></button>
                     </div>
                 </div>
-
-                <a href="https://www.etsmtl.ca/etudier-a-lets/inscription-aux-cours/horaire-cours" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white p-2 sm:px-4 sm:py-2 rounded-xl font-medium transition-colors text-xs sm:text-sm">
-                    <i class="fas fa-calendar-alt sm:mr-2"></i><span class="hidden sm:inline">Horaire Officiel</span>
-                </a>
             </div>
         </div>
     </header>
@@ -263,6 +259,11 @@
             }
         }
 
+        function formatTime(timeStr) {
+            if (!timeStr) return 'N/A';
+            return timeStr.slice(0, 5);
+        }
+
         function renderRooms(rooms) {
             const container = document.getElementById('rooms-container');
             const emptyState = document.getElementById('empty-state');
@@ -277,25 +278,33 @@
             
             if (currentView === 'grid') {
                 container.className = "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6";
-                container.innerHTML = rooms.map(room => `
+                container.innerHTML = rooms.map(room => {
+                    const statusColor = room.is_available ? 'bg-green-100 text-green-600 dark:bg-green-900/30' : 'bg-red-100 text-red-600 dark:bg-red-900/30';
+                    const statusText = room.is_available ? 'Libre' : 'Occupé';
+                    const courseCode = room.current_course_code || 'N/A';
+                    const freeUntil = formatTime(room.free_until);
+                    const nextCourseAt = formatTime(room.next_course_at);
+                    
+                    return `
                     <div class="room-card bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm hover:shadow-xl transition-all">
                         <div class="flex justify-between items-start mb-6">
                             <div>
                                 <h3 class="text-2xl font-black text-slate-800 dark:text-white">${room.room_name}</h3>
                                 <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Pavillon ${room.room_name[0]}</p>
                             </div>
-                            <span class="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter ${room.is_available ? 'bg-green-100 text-green-600 dark:bg-green-900/30' : 'bg-red-100 text-red-600 dark:bg-red-900/30'}">
-                                ${room.is_available ? 'Libre' : 'Occupé'}
+                            <span class="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter ${statusColor}">
+                                ${statusText}
                             </span>
                         </div>
                         
-                        ${!room.is_available && room.current_course ? `
+                        ${!room.is_available ? `
                             <div class="mb-6 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-700">
                                 <div class="flex items-center text-red-500 mb-2">
                                     <i class="fas fa-graduation-cap mr-2 text-xs"></i>
                                     <span class="text-[10px] font-black uppercase tracking-widest">Cours en cours</span>
                                 </div>
-                                <p class="font-bold text-slate-700 dark:text-slate-200">${room.current_course}</p>
+                                <p class="font-bold text-slate-700 dark:text-slate-200">${courseCode}</p>
+                                <p class="text-[10px] text-slate-400 font-bold uppercase mt-1">Jusqu'à ${freeUntil}</p>
                             </div>
                         ` : `
                             <div class="mb-6 p-4 bg-green-50 dark:bg-green-900/10 rounded-2xl border border-green-100 dark:border-green-900/20">
@@ -303,7 +312,7 @@
                                     <i class="fas fa-check-circle mr-2 text-xs"></i>
                                     <span class="text-[10px] font-black uppercase tracking-widest">Disponible</span>
                                 </div>
-                                <p class="text-xs text-green-700 dark:text-green-400 font-medium">Aucun cours pour le moment</p>
+                                <p class="text-xs text-green-700 dark:text-green-400 font-medium">Libre jusqu'à ${nextCourseAt === 'N/A' ? 'la fin de la journée' : nextCourseAt}</p>
                             </div>
                         `}
 
@@ -314,12 +323,12 @@
                             <div class="flex items-center justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest">
                                 <div class="flex items-center">
                                     <i class="far fa-clock mr-2"></i>
-                                    <span>Prochain: ${room.next_course_time || 'Aucun'}</span>
+                                    <span>Prochain cours: ${nextCourseAt === 'N/A' ? 'Aucun' : nextCourseAt}</span>
                                 </div>
                             </div>
                         </div>
                     </div>
-                `).join('');
+                `}).join('');
             } else {
                 container.className = "flex flex-col space-y-3";
                 container.innerHTML = rooms.map(room => `
@@ -329,8 +338,8 @@
                                 ${room.room_name}
                             </div>
                             <div>
-                                <p class="font-bold text-slate-800 dark:text-white">${room.is_available ? 'Libre' : room.current_course}</p>
-                                <p class="text-[10px] text-slate-400 font-bold uppercase">Prochain: ${room.next_course_time || 'N/A'}</p>
+                                <p class="font-bold text-slate-800 dark:text-white">${room.is_available ? 'Libre' : room.current_course_code}</p>
+                                <p class="text-[10px] text-slate-400 font-bold uppercase">Prochain: ${formatTime(room.next_course_at) || 'N/A'}</p>
                             </div>
                         </div>
                         <span class="w-3 h-3 rounded-full ${room.is_available ? 'bg-green-500 shadow-lg shadow-green-500/50' : 'bg-red-500 shadow-lg shadow-red-500/50'}"></span>
