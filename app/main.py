@@ -40,11 +40,15 @@ async def log_requests(request: Request, call_next):
 app.include_router(api_v1_router, prefix=settings.API_V1_STR)
 
 # --- SERVIR LES FICHIERS STATIQUES (FRONTEND) ---
-static_path = os.path.join(os.path.dirname(__file__), "static")
+# On définit le chemin absolu vers le dossier static
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+static_path = os.path.join(BASE_DIR, "static")
 
 # On vérifie si le dossier static existe avant de le monter
 if os.path.exists(static_path):
     app.mount("/static", StaticFiles(directory=static_path), name="static")
+else:
+    logger.error(f"Dossier static non trouvé à : {static_path}")
 
 # Route principale qui sert l'interface publique
 @app.get("/")
@@ -54,7 +58,7 @@ async def read_index():
         return FileResponse(index_file)
     return JSONResponse(
         status_code=404,
-        content={"message": "Erreur : Fichier index.html non trouvé dans app/static/"}
+        content={"message": f"Erreur : Fichier index.html non trouvé dans {static_path}"}
     )
 
 # Route Admin
@@ -65,7 +69,7 @@ async def read_admin():
         return FileResponse(admin_file)
     return JSONResponse(
         status_code=404,
-        content={"message": "Erreur : Fichier admin.html non trouvé dans app/static/"}
+        content={"message": f"Erreur : Fichier admin.html non trouvé dans {static_path}"}
     )
 
 # Gestionnaire d'erreurs global
