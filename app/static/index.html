@@ -43,6 +43,19 @@
         /* Fix Select Dark Mode */
         select option { background-color: white; color: black; }
         .dark select option { background-color: #1e293b; color: white; }
+
+        /* Notification Toast */
+        #sync-toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 100;
+        }
+        #sync-toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
     </style>
 </head>
 <body class="min-h-screen pb-12 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
@@ -179,16 +192,18 @@
             <h3 class="text-xl font-black text-slate-800 dark:text-white mb-2">Aucun local à l'horizon</h3>
             <p class="text-slate-500 dark:text-slate-400 max-w-xs mx-auto">Ajustez vos filtres ou tentez une autre heure de recherche.</p>
         </div>
-
-        <!-- NOUVEAU : État de Synchronisation -->
-        <div id="sync-state" class="hidden text-center py-32">
-            <div class="w-24 h-24 bg-red-50 dark:bg-red-900/20 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
-                <i class="fas fa-sync-alt text-4xl fa-spin"></i>
-            </div>
-            <h3 class="text-xl font-black text-slate-800 dark:text-white mb-2">Initialisation des horaires...</h3>
-            <p class="text-slate-500 dark:text-slate-400 max-w-sm mx-auto">Le serveur récupère les dernières données de l'ÉTS. Merci de patienter quelques instants, les salles vont apparaître d'ici peu.</p>
-        </div>
     </main>
+
+    <!-- Notification Toast (Cute) -->
+    <div id="sync-toast" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-6 py-4 rounded-3xl shadow-2xl flex items-center space-x-4 max-w-sm mx-auto">
+        <div class="w-10 h-10 bg-red-50 dark:bg-red-900/20 text-red-500 rounded-full flex items-center justify-center flex-shrink-0">
+            <i class="fas fa-sync-alt fa-spin"></i>
+        </div>
+        <div>
+            <p class="text-sm font-black text-slate-800 dark:text-white">✨ Synchronisation en cours...</p>
+            <p class="text-[10px] text-slate-500 dark:text-slate-400 leading-tight mt-0.5">Nous récupérons les horaires en direct de l'ÉTS. Les salles apparaîtront d'ici peu !</p>
+        </div>
+    </div>
 
     <script>
         // Variables Globales
@@ -286,15 +301,13 @@
                 if (res.ok) {
                     allRooms = await res.json();
                     
-                    // Si aucune salle n'est trouvée, c'est peut-être que la synchro est en cours
                     if (allRooms.length === 0) {
-                        showSyncState(true);
-                        // On vérifie à nouveau toutes les 5 secondes
+                        showSyncToast(true);
                         if (!syncCheckInterval) {
                             syncCheckInterval = setInterval(fetchRooms, 5000);
                         }
                     } else {
-                        showSyncState(false);
+                        showSyncToast(false);
                         if (syncCheckInterval) {
                             clearInterval(syncCheckInterval);
                             syncCheckInterval = null;
@@ -310,20 +323,14 @@
             }
         }
 
-        function showSyncState(show) {
-            const container = document.getElementById('results-container');
-            const sync = document.getElementById('sync-state');
-            const empty = document.getElementById('empty-state');
+        function showSyncToast(show) {
+            const toast = document.getElementById('sync-toast');
             const countEl = document.getElementById('results-count');
-
             if (show) {
-                container.classList.add('hidden');
-                empty.classList.add('hidden');
-                sync.classList.remove('hidden');
+                toast.classList.add('show');
                 countEl.innerText = "SYNCHRONISATION...";
             } else {
-                sync.classList.add('hidden');
-                container.classList.remove('hidden');
+                toast.classList.remove('show');
             }
         }
 
