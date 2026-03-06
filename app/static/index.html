@@ -51,11 +51,22 @@
             bottom: 24px;
             left: 50%;
             transform: translateX(-50%) translateY(100px);
-            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            z-index: 100;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 35; /* En dessous du header et des settings */
         }
         #sync-toast.show {
             transform: translateX(-50%) translateY(0);
+        }
+        #sync-toast.hidden-by-settings {
+            opacity: 0;
+            pointer-events: none;
+        }
+        @media (max-width: 640px) {
+            #sync-toast {
+                bottom: 16px;
+                width: calc(100% - 32px);
+                padding: 12px 16px;
+            }
         }
 
         /* Settings Panel */
@@ -67,7 +78,7 @@
             width: 100%;
             max-width: 400px;
             background: white;
-            z-index: 50;
+            z-index: 60; /* Priorité maximale */
             transform: translateX(100%);
             transition: transform 0.3s ease-in-out;
             box-shadow: -10px 0 30px rgba(0,0,0,0.1);
@@ -424,6 +435,7 @@
             document.getElementById('settings-toggle').onclick = () => {
                 document.getElementById('settings-panel').classList.add('open');
                 document.getElementById('settings-overlay').classList.add('show');
+                document.getElementById('sync-toast').classList.add('hidden-by-settings');
             };
             document.getElementById('settings-close').onclick = closeSettings;
             document.getElementById('settings-overlay').onclick = closeSettings;
@@ -479,6 +491,7 @@
         function closeSettings() {
             document.getElementById('settings-panel').classList.remove('open');
             document.getElementById('settings-overlay').classList.remove('show');
+            document.getElementById('sync-toast').classList.remove('hidden-by-settings');
         }
 
         async function fetchRooms() {
