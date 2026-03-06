@@ -39,6 +39,7 @@
         .timeline-segment { height: 100%; transition: width 0.3s ease; }
         .timeline-free { background: #22c55e; }
         .timeline-busy { background: #ef4444; }
+        .timeline-warning { background: #f59e0b; }
 
         /* Fix Select Dark Mode */
         select option { background-color: white; color: black; }
@@ -56,6 +57,40 @@
         #sync-toast.show {
             transform: translateX(-50%) translateY(0);
         }
+
+        /* Settings Panel */
+        #settings-panel {
+            position: fixed;
+            top: 0;
+            right: 0;
+            height: 100%;
+            width: 100%;
+            max-width: 400px;
+            background: white;
+            z-index: 50;
+            transform: translateX(100%);
+            transition: transform 0.3s ease-in-out;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.1);
+        }
+        .dark #settings-panel { background: #0f172a; box-shadow: -10px 0 30px rgba(0,0,0,0.3); }
+        #settings-panel.open { transform: translateX(0); }
+        #settings-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 40;
+            display: none;
+            backdrop-filter: blur(4px);
+        }
+        #settings-overlay.show { display: block; }
+
+        /* Compact Mode */
+        .compact-mode .room-card { padding: 1rem; }
+        .compact-mode .room-card h3 { font-size: 1.5rem; }
+        .compact-mode .room-card .space-y-4 { space-y: 2; }
     </style>
 </head>
 <body class="min-h-screen pb-12 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
@@ -77,7 +112,7 @@
 
                 <div class="h-6 w-px bg-slate-200 dark:bg-slate-800 hidden md:block"></div>
 
-                <!-- Theme & View -->
+                <!-- Theme, View & Settings -->
                 <div class="flex items-center space-x-2">
                     <button id="theme-toggle" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">
                         <i id="theme-icon" class="fas fa-moon"></i>
@@ -86,10 +121,92 @@
                         <button id="view-grid" class="p-2 rounded-lg transition-all"><i class="fas fa-th-large"></i></button>
                         <button id="view-list" class="p-2 rounded-lg transition-all"><i class="fas fa-list"></i></button>
                     </div>
+                    <button id="settings-toggle" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">
+                        <i class="fas fa-cog"></i>
+                    </button>
                 </div>
             </div>
         </div>
     </header>
+
+    <!-- Settings Overlay & Panel -->
+    <div id="settings-overlay"></div>
+    <div id="settings-panel" class="p-8 overflow-y-auto">
+        <div class="flex items-center justify-between mb-8">
+            <h2 class="text-2xl font-black text-slate-800 dark:text-white">Paramètres</h2>
+            <button id="settings-close" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+
+        <!-- Simple Settings -->
+        <div class="space-y-8">
+            <section>
+                <label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-4">Préférences Rapides</label>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+                        <div>
+                            <p class="text-sm font-bold text-slate-700 dark:text-slate-200">Mode Compact</p>
+                            <p class="text-[10px] text-slate-400">Afficher plus de salles</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="setting-compact" class="sr-only peer">
+                            <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-red-600"></div>
+                        </label>
+                    </div>
+                    <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+                        <div>
+                            <p class="text-sm font-bold text-slate-700 dark:text-slate-200">Format 24h</p>
+                            <p class="text-[10px] text-slate-400">Utiliser 13:30 au lieu de 1:30 PM</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="setting-24h" class="sr-only peer" checked>
+                            <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-red-600"></div>
+                        </label>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-slate-700 dark:text-slate-200 mb-2">Pavillon par défaut</p>
+                        <select id="setting-default-pav" class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none text-xs font-bold dark:text-white appearance-none">
+                            <option value="ALL">Tous les pavillons</option>
+                            <option value="A">Pavillon A</option>
+                            <option value="B">Pavillon B</option>
+                            <option value="D">Pavillon D</option>
+                            <option value="E">Pavillon E</option>
+                            <option value="F">Pavillon F</option>
+                        </select>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Advanced Settings -->
+            <section>
+                <label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-4">Paramètres Avancés</label>
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <p class="text-sm font-bold text-slate-700 dark:text-slate-200">Seuil d'alerte (min)</p>
+                            <span id="alert-threshold-val" class="text-xs font-black text-red-500">30 min</span>
+                        </div>
+                        <input type="range" id="setting-alert-threshold" min="5" max="60" step="5" value="30" class="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-red-600">
+                        <p class="text-[10px] text-slate-400 mt-2">La salle devient orange s'il reste moins de temps.</p>
+                    </div>
+                    <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+                        <div>
+                            <p class="text-sm font-bold text-slate-700 dark:text-slate-200">Contraste Élevé</p>
+                            <p class="text-[10px] text-slate-400">Améliorer la lisibilité</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="setting-high-contrast" class="sr-only peer">
+                            <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-red-600"></div>
+                        </label>
+                    </div>
+                    <button id="reset-settings" class="w-full py-3 rounded-2xl text-xs font-black text-red-500 border border-red-100 dark:border-red-900/30 hover:bg-red-50 dark:hover:bg-red-900/10 transition-all">
+                        RÉINITIALISER LES PARAMÈTRES
+                    </button>
+                </div>
+            </section>
+        </div>
+    </div>
 
     <main class="max-w-7xl mx-auto px-4 mt-6">
         <!-- Dashboard / Filtres -->
@@ -214,13 +331,59 @@
         let showOccupe = true;
         let syncCheckInterval = null;
 
+        // Settings State
+        let settings = {
+            compact: false,
+            use24h: true,
+            defaultPav: 'ALL',
+            alertThreshold: 30,
+            highContrast: false
+        };
+
         window.onload = function() {
+            loadSettings();
             initTheme();
             initTime();
             updateViewButtons();
             setupEvents();
             fetchRooms();
         };
+
+        function loadSettings() {
+            const saved = localStorage.getItem('userSettings');
+            if (saved) {
+                settings = { ...settings, ...JSON.parse(saved) };
+            }
+            applySettings();
+        }
+
+        function applySettings() {
+            document.body.classList.toggle('compact-mode', settings.compact);
+            document.body.classList.toggle('high-contrast', settings.highContrast);
+            document.getElementById('setting-compact').checked = settings.compact;
+            document.getElementById('setting-24h').checked = settings.use24h;
+            document.getElementById('setting-default-pav').value = settings.defaultPav;
+            document.getElementById('setting-alert-threshold').value = settings.alertThreshold;
+            document.getElementById('alert-threshold-val').innerText = settings.alertThreshold + " min";
+            document.getElementById('setting-high-contrast').checked = settings.highContrast;
+            
+            if (currentPavillon === 'ALL' && settings.defaultPav !== 'ALL') {
+                currentPavillon = settings.defaultPav;
+                document.querySelectorAll('.filter-btn').forEach(btn => {
+                    if (btn.getAttribute('data-pav') === currentPavillon) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+            }
+        }
+
+        function saveSettings() {
+            localStorage.setItem('userSettings', JSON.stringify(settings));
+            applySettings();
+            filterAndDisplay();
+        }
 
         function initTheme() {
             const theme = localStorage.getItem('theme');
@@ -257,6 +420,30 @@
             document.getElementById('sort-select').onchange = filterAndDisplay;
             document.getElementById('quick-find').onclick = runQuickFind;
 
+            // Settings Events
+            document.getElementById('settings-toggle').onclick = () => {
+                document.getElementById('settings-panel').classList.add('open');
+                document.getElementById('settings-overlay').classList.add('show');
+            };
+            document.getElementById('settings-close').onclick = closeSettings;
+            document.getElementById('settings-overlay').onclick = closeSettings;
+
+            document.getElementById('setting-compact').onchange = (e) => { settings.compact = e.target.checked; saveSettings(); };
+            document.getElementById('setting-24h').onchange = (e) => { settings.use24h = e.target.checked; saveSettings(); };
+            document.getElementById('setting-default-pav').onchange = (e) => { settings.defaultPav = e.target.value; saveSettings(); };
+            document.getElementById('setting-alert-threshold').oninput = (e) => { 
+                settings.alertThreshold = parseInt(e.target.value); 
+                document.getElementById('alert-threshold-val').innerText = settings.alertThreshold + " min";
+            };
+            document.getElementById('setting-alert-threshold').onchange = saveSettings;
+            document.getElementById('setting-high-contrast').onchange = (e) => { settings.highContrast = e.target.checked; saveSettings(); };
+            document.getElementById('reset-settings').onclick = () => {
+                if (confirm("Réinitialiser tous les paramètres ?")) {
+                    settings = { compact: false, use24h: true, defaultPav: 'ALL', alertThreshold: 30, highContrast: false };
+                    saveSettings();
+                }
+            };
+
             document.querySelectorAll('.filter-btn').forEach(btn => {
                 btn.onclick = function() {
                     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -287,6 +474,11 @@
                 this.classList.add('active');
                 filterAndDisplay();
             };
+        }
+
+        function closeSettings() {
+            document.getElementById('settings-panel').classList.remove('open');
+            document.getElementById('settings-overlay').classList.remove('show');
         }
 
         async function fetchRooms() {
@@ -386,22 +578,24 @@
                 rooms.forEach(r => {
                     const isLab = r.room_name.startsWith('A') || r.room_name.startsWith('B');
                     const courseCode = r.is_available ? (r.next_course_code || 'Aucun cours') : (r.current_course_code || 'Occupé');
+                    const isWarning = r.is_available && r.remaining_duration_minutes <= settings.alertThreshold;
+                    
                     html += `
                         <div class="room-card bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm hover:shadow-xl transition-all relative overflow-hidden">
                             <div class="flex justify-between items-start mb-6">
                                 <div>
                                     <h3 class="text-3xl font-black text-slate-800 dark:text-white tracking-tighter">${r.room_name}</h3>
                                     <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">${isLab ? 'Labo' : 'Classe'}</p>
-                                    <p class="text-xs font-bold ${r.is_available ? 'text-slate-500' : 'text-red-500'} mt-1">${courseCode}</p>
+                                    <p class="text-xs font-bold ${r.is_available ? (isWarning ? 'text-amber-500' : 'text-slate-500') : 'text-red-500'} mt-1">${courseCode}</p>
                                 </div>
-                                <div class="w-3 h-3 rounded-full ${r.is_available ? 'bg-green-500 shadow-[0_0_12px_rgba(34,197,94,0.6)]' : 'bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.6)]'}"></div>
+                                <div class="w-3 h-3 rounded-full ${r.is_available ? (isWarning ? 'bg-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.6)]' : 'bg-green-500 shadow-[0_0_12px_rgba(34,197,94,0.6)]') : 'bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.6)]'}"></div>
                             </div>
                             <div class="space-y-4">
                                 <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase">
-                                    <span>Timeline (3h)</span>
-                                    <span class="${r.is_available ? 'text-green-500' : 'text-red-500'}">${r.is_available ? 'LIBRE' : 'OCCUPÉ'}</span>
+                                    <span>Timeline</span>
+                                    <span class="${r.is_available ? (isWarning ? 'text-amber-500' : 'text-green-500') : 'text-red-500'}">${r.is_available ? (isWarning ? 'BIENTÔT OCCUPÉ' : 'LIBRE') : 'OCCUPÉ'}</span>
                                 </div>
-                                ${getTimeline(r)}
+                                ${getTimeline(r, isWarning)}
                                 <div class="pt-4 border-t border-slate-50 dark:border-slate-800 flex justify-between items-end">
                                     <div>
                                         <p class="text-[10px] font-bold text-slate-400 uppercase mb-1">${r.is_available ? 'LIBRE JUSQU\'À' : 'OCCUPÉ JUSQU\'À'}</p>
@@ -421,6 +615,7 @@
             } else {
                 let html = '<div class="space-y-3">';
                 rooms.forEach(r => {
+                    const isWarning = r.is_available && r.remaining_duration_minutes <= settings.alertThreshold;
                     html += `
                         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex items-center justify-between shadow-sm">
                             <div class="flex items-center space-x-4">
@@ -435,7 +630,7 @@
                                     <p class="text-[10px] font-bold text-slate-400 uppercase">Libre jusqu'à</p>
                                     <p class="text-sm font-black text-slate-700 dark:text-slate-300">${formatTime(r.free_until)}</p>
                                 </div>
-                                <div class="w-3 h-3 rounded-full ${r.is_available ? 'bg-green-500' : 'bg-red-500'}"></div>
+                                <div class="w-3 h-3 rounded-full ${r.is_available ? (isWarning ? 'bg-amber-500' : 'bg-green-500') : 'bg-red-500'}"></div>
                             </div>
                         </div>
                     `;
@@ -445,11 +640,10 @@
             }
         }
 
-        function getTimeline(room) {
-            const totalWidth = 100;
+        function getTimeline(room, isWarning) {
             let segments = "";
             if (room.is_available) {
-                segments = `<div class="timeline-segment timeline-free" style="width: 100%"></div>`;
+                segments = `<div class="timeline-segment ${isWarning ? 'timeline-warning' : 'timeline-free'}" style="width: 100%"></div>`;
             } else {
                 segments = `<div class="timeline-segment timeline-busy" style="width: 100%"></div>`;
             }
@@ -458,7 +652,16 @@
 
         function formatTime(t) {
             if (!t) return "--:--";
-            return t.slice(0, 5);
+            let [h, m] = t.split(':');
+            h = parseInt(h);
+            
+            if (!settings.use24h) {
+                const ampm = h >= 12 ? 'PM' : 'AM';
+                h = h % 12;
+                h = h ? h : 12; // l'heure 0 devient 12
+                return `${h}:${m} ${ampm}`;
+            }
+            return `${h.toString().padStart(2, '0')}:${m}`;
         }
 
         function setView(view) {
