@@ -4,8 +4,9 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.endpoints import router as api_v1_router
 from app.core.config import settings
-from app.db.session import engine
+from app.db.session import engine, SessionLocal
 from app.db.base_class import Base
+from app.services.room_service import room_service
 from loguru import logger
 import time
 import os
@@ -17,6 +18,32 @@ app = FastAPI(
     title=settings.PROJECT_NAME,
     openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
+
+# --- AUTO-SYNCHRONISATION AU DÉMARRAGE ---
+@app.on_event("startup")
+async def startup_event():
+    """
+    S'exécute au démarrage du serveur. 
+    Vérifie si la base de données est vide et lance une synchro auto si nécessaire.
+    """
+    db = SessionLocal()
+    try:
+        rooms = room_service.get_all_rooms(db)
+        if not rooms:
+            logger.info("🚀 Base de données vide au démarrage. Lancement de l'auto-synchronisation ÉTS...")
+            # On définit le dossier d'upload par défaut
+            upload_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "uploads")
+            os.makedirs(upload_dir, exist_ok=True)
+            
+            # Lancement de la synchro
+            result = room_service.sync_from_ets_website(db, upload_dir)
+            logger.info(f"✅ Auto-synchro terminée : {result.get('message')}")
+        else:
+            logger.info(f"ℹ️ Base de données déjà peuplée ({len(rooms)} salles). Pas de synchro nécessaire.")
+    except Exception as e:
+        logger.error(f"❌ Erreur lors de l'auto-synchro au démarrage : {str(e)}")
+    finally:
+        db.close()
 
 # --- CONFIGURATION CORS ---
 app.add_middleware(
@@ -40,11 +67,9 @@ async def log_requests(request: Request, call_next):
 app.include_router(api_v1_router, prefix=settings.API_V1_STR)
 
 # --- SERVIR LES FICHIERS STATIQUES (FRONTEND) ---
-# On définit le chemin absolu vers le dossier static
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 static_path = os.path.join(BASE_DIR, "static")
 
-# On vérifie si le dossier static existe avant de le monter
 if os.path.exists(static_path):
     app.mount("/static", StaticFiles(directory=static_path), name="static")
 else:
@@ -58,7 +83,7 @@ async def read_index():
         return FileResponse(index_file)
     return JSONResponse(
         status_code=404,
-        content={"message": f"Erreur : Fichier index.html non trouvé dans {static_path}"}
+        content={"message": "Erreur : Fichier index.html non trouvé"}
     )
 
 # Route Admin
@@ -69,7 +94,7 @@ async def read_admin():
         return FileResponse(admin_file)
     return JSONResponse(
         status_code=404,
-        content={"message": f"Erreur : Fichier admin.html non trouvé dans {static_path}"}
+        content={"message": "Erreur : Fichier admin.html non trouvé"}
     )
 
 # Gestionnaire d'erreurs global
@@ -83,5 +108,4 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 if __name__ == "__main__":
     import uvicorn
-    # Lancement du serveur sur le port 8000
     uvicorn.run(app, host="0.0.0.0", port=8000)

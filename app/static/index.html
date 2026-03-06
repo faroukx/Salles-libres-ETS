@@ -179,6 +179,15 @@
             <h3 class="text-xl font-black text-slate-800 dark:text-white mb-2">Aucun local à l'horizon</h3>
             <p class="text-slate-500 dark:text-slate-400 max-w-xs mx-auto">Ajustez vos filtres ou tentez une autre heure de recherche.</p>
         </div>
+
+        <!-- NOUVEAU : État de Synchronisation -->
+        <div id="sync-state" class="hidden text-center py-32">
+            <div class="w-24 h-24 bg-red-50 dark:bg-red-900/20 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
+                <i class="fas fa-sync-alt text-4xl fa-spin"></i>
+            </div>
+            <h3 class="text-xl font-black text-slate-800 dark:text-white mb-2">Initialisation des horaires...</h3>
+            <p class="text-slate-500 dark:text-slate-400 max-w-sm mx-auto">Le serveur récupère les dernières données de l'ÉTS. Merci de patienter quelques instants, les salles vont apparaître d'ici peu.</p>
+        </div>
     </main>
 
     <script>
@@ -188,6 +197,7 @@
         let currentView = localStorage.getItem('viewMode') || 'grid';
         let showLibre = true;
         let showOccupe = true;
+        let syncCheckInterval = null;
 
         window.onload = function() {
             initTheme();
@@ -271,18 +281,49 @@
             
             if (!date || !time) return;
             
-            countEl.innerText = "CHARGEMENT...";
             try {
                 const res = await fetch(`/api/v1/available-rooms?date=${date}&time=${time}`);
                 if (res.ok) {
                     allRooms = await res.json();
-                    updateDensities();
-                    filterAndDisplay();
+                    
+                    // Si aucune salle n'est trouvée, c'est peut-être que la synchro est en cours
+                    if (allRooms.length === 0) {
+                        showSyncState(true);
+                        // On vérifie à nouveau toutes les 5 secondes
+                        if (!syncCheckInterval) {
+                            syncCheckInterval = setInterval(fetchRooms, 5000);
+                        }
+                    } else {
+                        showSyncState(false);
+                        if (syncCheckInterval) {
+                            clearInterval(syncCheckInterval);
+                            syncCheckInterval = null;
+                        }
+                        updateDensities();
+                        filterAndDisplay();
+                    }
                 } else {
                     countEl.innerText = "ERREUR API";
                 }
             } catch (err) {
                 countEl.innerText = "ERREUR CONNEXION";
+            }
+        }
+
+        function showSyncState(show) {
+            const container = document.getElementById('results-container');
+            const sync = document.getElementById('sync-state');
+            const empty = document.getElementById('empty-state');
+            const countEl = document.getElementById('results-count');
+
+            if (show) {
+                container.classList.add('hidden');
+                empty.classList.add('hidden');
+                sync.classList.remove('hidden');
+                countEl.innerText = "SYNCHRONISATION...";
+            } else {
+                sync.classList.add('hidden');
+                container.classList.remove('hidden');
             }
         }
 
