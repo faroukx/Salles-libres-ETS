@@ -1,7 +1,7 @@
 # Salles libres ÉTS
 API permettant de trouver automatiquement les salles de classe disponibles à l’ÉTS à partir d’un PDF d’horaire officiel.
 
-![display](https://github.com/user-attachments/assets/82e4365f-f8db-45ba-8191-3bb39ae73e3c)
+![display](https://github.com/faroukx/Salles-libres-ETS/blob/main/cover.jpg)
 
 ## Table des matières
 - [Source des données](#-source-des-données)
