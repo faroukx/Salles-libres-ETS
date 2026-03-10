@@ -1,367 +1,17 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Salles libres ÉTS</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        ets: '#ef4444',
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; transition: background-color 0.3s ease; }
-        .room-card { transition: all 0.2s ease; }
-        .room-card:hover { transform: translateY(-4px); }
-        .filter-btn.active { background-color: #ef4444; color: white; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); }
-        .state-btn.active.libre { background-color: #22c55e; color: white; }
-        .state-btn.active.occupe { background-color: #ef4444; color: white; }
-        .state-btn.active.all { background-color: #64748b; color: white; }
-        
-        /* Custom Scrollbar */
-        .dark ::-webkit-scrollbar { width: 8px; }
-        .dark ::-webkit-scrollbar-track { background: #1e293b; }
-        .dark ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
-
-        /* Timeline Styles */
-        .timeline-bar { height: 6px; border-radius: 3px; overflow: hidden; display: flex; background: #e2e8f0; }
-        .dark .timeline-bar { background: #334155; }
-        .timeline-segment { height: 100%; transition: width 0.3s ease; }
-        .timeline-free { background: #22c55e; }
-        .timeline-busy { background: #ef4444; }
-        .timeline-warning { background: #f59e0b; }
-
-        /* Fix Select Dark Mode */
-        select option { background-color: white; color: black; }
-        .dark select option { background-color: #1e293b; color: white; }
-
-        /* Notification Toast */
-        #sync-toast {
-            position: fixed;
-            bottom: 24px;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            z-index: 35; /* En dessous du header et des settings */
-        }
-        #sync-toast.show {
-            transform: translateX(-50%) translateY(0);
-        }
-        #sync-toast.hidden-by-settings {
-            opacity: 0;
-            pointer-events: none;
-        }
-        @media (max-width: 640px) {
-            #sync-toast {
-                bottom: 16px;
-                width: calc(100% - 32px);
-                padding: 12px 16px;
-            }
-        }
-
-        /* Settings Panel */
-        #settings-panel {
-            position: fixed;
-            top: 0;
-            right: 0;
-            height: 100%;
-            width: 100%;
-            max-width: 400px;
-            background: white;
-            z-index: 60; /* Priorité maximale */
-            transform: translateX(100%);
-            transition: transform 0.3s ease-in-out;
-            box-shadow: -10px 0 30px rgba(0,0,0,0.1);
-        }
-        .dark #settings-panel { background: #0f172a; box-shadow: -10px 0 30px rgba(0,0,0,0.3); }
-        #settings-panel.open { transform: translateX(0); }
-        #settings-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 40;
-            display: none;
-            backdrop-filter: blur(4px);
-        }
-        #settings-overlay.show { display: block; }
-
-        /* Compact Mode */
-        .compact-mode .room-card { padding: 1rem; }
-        .compact-mode .room-card h3 { font-size: 1.5rem; }
-        .compact-mode .room-card .space-y-4 { space-y: 2; }
-    </style>
-</head>
-<body class="min-h-screen pb-12 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
-    <!-- Header -->
-    <header class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-30 transition-colors shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div class="bg-red-600 p-2 rounded-xl shadow-lg shadow-red-600/20">
-                    <i class="fas fa-bolt text-white"></i>
-                </div>
-                <h1 class="text-xl font-bold text-slate-800 dark:text-white hidden sm:block">Salles libres <span class="text-red-600 font-black">ÉTS</span></h1>
-            </div>
-            
-            <div class="flex items-center space-x-2 sm:space-x-4">
-                <!-- Quick Find -->
-                <button id="quick-find" class="bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm px-3 sm:px-5 py-2 rounded-full font-bold transition-all flex items-center shadow-lg shadow-red-600/30">
-                    <i class="fas fa-bolt mr-2"></i>Urgence Étude
-                </button>
-
-                <div class="h-6 w-px bg-slate-200 dark:bg-slate-800 hidden md:block"></div>
-
-                <!-- Theme, View & Settings -->
-                <div class="flex items-center space-x-2">
-                    <button id="theme-toggle" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">
-                        <i id="theme-icon" class="fas fa-moon"></i>
-                    </button>
-                    <div class="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
-                        <button id="view-grid" class="p-2 rounded-lg transition-all"><i class="fas fa-th-large"></i></button>
-                        <button id="view-list" class="p-2 rounded-lg transition-all"><i class="fas fa-list"></i></button>
-                    </div>
-                    <button id="settings-toggle" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">
-                        <i class="fas fa-cog"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </header>
-
-    <!-- Settings Overlay & Panel -->
-    <div id="settings-overlay"></div>
-    <div id="settings-panel" class="p-8 overflow-y-auto">
-        <div class="flex items-center justify-between mb-8">
-            <h2 class="text-2xl font-black text-slate-800 dark:text-white">Paramètres</h2>
-            <button id="settings-close" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
-                <i class="fas fa-times text-xl"></i>
-            </button>
-        </div>
-
-        <!-- Simple Settings -->
-        <div class="space-y-8">
-            <section>
-                <label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-4">Préférences Rapides</label>
-                <div class="space-y-4">
-                    <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
-                        <div>
-                            <p class="text-sm font-bold text-slate-700 dark:text-slate-200">Mode Compact</p>
-                            <p class="text-[10px] text-slate-400">Afficher plus de salles</p>
-                        </div>
-                        <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" id="setting-compact" class="sr-only peer">
-                            <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-red-600"></div>
-                        </label>
-                    </div>
-                    <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
-                        <div>
-                            <p class="text-sm font-bold text-slate-700 dark:text-slate-200">Format 24h</p>
-                            <p class="text-[10px] text-slate-400">Utiliser 13:30 au lieu de 1:30 PM</p>
-                        </div>
-                        <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" id="setting-24h" class="sr-only peer" checked>
-                            <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-red-600"></div>
-                        </label>
-                    </div>
-                    <div>
-                        <p class="text-sm font-bold text-slate-700 dark:text-slate-200 mb-2">Pavillon par défaut</p>
-                        <select id="setting-default-pav" class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none text-xs font-bold dark:text-white appearance-none">
-                            <option value="ALL">Tous les pavillons</option>
-                            <option value="A">Pavillon A</option>
-                            <option value="B">Pavillon B</option>
-                            <option value="D">Pavillon D</option>
-                            <option value="E">Pavillon E</option>
-                            <option value="F">Pavillon F</option>
-                        </select>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Advanced Settings -->
-            <section>
-                <label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-4">Paramètres Avancés</label>
-                <div class="space-y-4">
-                    <div>
-                        <div class="flex justify-between mb-2">
-                            <p class="text-sm font-bold text-slate-700 dark:text-slate-200">Seuil d'alerte (min)</p>
-                            <span id="alert-threshold-val" class="text-xs font-black text-red-500">30 min</span>
-                        </div>
-                        <input type="range" id="setting-alert-threshold" min="5" max="60" step="5" value="30" class="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-red-600">
-                        <p class="text-[10px] text-slate-400 mt-2">La salle devient orange s'il reste moins de temps.</p>
-                    </div>
-                    <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
-                        <div>
-                            <p class="text-sm font-bold text-slate-700 dark:text-slate-200">Contraste Élevé</p>
-                            <p class="text-[10px] text-slate-400">Améliorer la lisibilité</p>
-                        </div>
-                        <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" id="setting-high-contrast" class="sr-only peer">
-                            <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-red-600"></div>
-                        </label>
-                    </div>
-                    <button id="reset-settings" class="w-full py-3 rounded-2xl text-xs font-black text-red-500 border border-red-100 dark:border-red-900/30 hover:bg-red-50 dark:hover:bg-red-900/10 transition-all">
-                        RÉINITIALISER LES PARAMÈTRES
-                    </button>
-                </div>
-            </section>
-
-            <!-- Signature -->
-            <section class="pt-8 border-t border-slate-100 dark:border-slate-800">
-                <div class="flex items-center space-x-4">
-                    <div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400">
-                        <i class="fas fa-user-graduate"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm font-black text-slate-800 dark:text-white">Farouk S.</p>
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Étudiant à l'ÉTS</p>
-                    </div>
-                </div>
-            </section>
-        </div>
-    </div>
-
-    <main class="max-w-7xl mx-auto px-4 mt-6">
-        <!-- Dashboard / Filtres -->
-        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 mb-8 shadow-xl shadow-slate-200/50 dark:shadow-none transition-colors">
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                <!-- Section Recherche & Temps -->
-                <div class="lg:col-span-4 space-y-6">
-                    <div class="flex items-center justify-between">
-                        <label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Recherche Intelligente</label>
-                        <span id="results-count" class="text-[10px] font-black text-red-500 uppercase tracking-widest">0 LOCAUX TROUVÉS</span>
-                    </div>
-                    <div class="relative">
-                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                        <input type="text" id="search-input" placeholder="Local, cours, pavillon..." class="w-full pl-12 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-4 focus:ring-red-500/10 focus:border-red-500 transition-all outline-none text-slate-800 dark:text-white font-medium">
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <input type="date" id="date-input" class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-red-500 outline-none text-sm font-bold dark:text-white">
-                        <input type="time" id="time-input" class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-red-500 outline-none text-sm font-bold dark:text-white">
-                    </div>
-                </div>
-
-                <!-- Section Pavillons & Densité -->
-                <div class="lg:col-span-5">
-                    <label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-4">Pavillons & Densité d'occupation</label>
-                    <div class="grid grid-cols-3 sm:grid-cols-6 gap-3" id="pavillon-filters">
-                        <div class="space-y-2">
-                            <button data-pav="ALL" class="filter-btn active w-full py-3 rounded-2xl text-sm font-black transition-all bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">Tous</button>
-                            <div class="h-1 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden"><div id="density-ALL" class="h-full bg-red-500 transition-all duration-1000" style="width: 0%"></div></div>
-                        </div>
-                        <div class="space-y-2">
-                            <button data-pav="A" class="filter-btn w-full py-3 rounded-2xl text-sm font-black transition-all bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">A</button>
-                            <div class="h-1 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden"><div id="density-A" class="h-full bg-red-500 transition-all duration-1000" style="width: 0%"></div></div>
-                        </div>
-                        <div class="space-y-2">
-                            <button data-pav="B" class="filter-btn w-full py-3 rounded-2xl text-sm font-black transition-all bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">B</button>
-                            <div class="h-1 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden"><div id="density-B" class="h-full bg-red-500 transition-all duration-1000" style="width: 0%"></div></div>
-                        </div>
-                        <div class="space-y-2">
-                            <button data-pav="D" class="filter-btn w-full py-3 rounded-2xl text-sm font-black transition-all bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">D</button>
-                            <div class="h-1 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden"><div id="density-D" class="h-full bg-red-500 transition-all duration-1000" style="width: 0%"></div></div>
-                        </div>
-                        <div class="space-y-2">
-                            <button data-pav="E" class="filter-btn w-full py-3 rounded-2xl text-sm font-black transition-all bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">E</button>
-                            <div class="h-1 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden"><div id="density-E" class="h-full bg-red-500 transition-all duration-1000" style="width: 0%"></div></div>
-                        </div>
-                        <div class="space-y-2">
-                            <button data-pav="F" class="filter-btn w-full py-3 rounded-2xl text-sm font-black transition-all bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">F</button>
-                            <div class="h-1 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden"><div id="density-F" class="h-full bg-red-500 transition-all duration-1000" style="width: 0%"></div></div>
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-4 mt-6">
-                        <div>
-                            <label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-2">Étage</label>
-                            <select id="floor-filter" class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none text-xs font-bold dark:text-white appearance-none">
-                                <option value="ALL">Tous les étages</option>
-                                <option value="1">1er étage</option>
-                                <option value="2">2e étage</option>
-                                <option value="3">3e étage</option>
-                                <option value="4">4e étage</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-2">Trier par</label>
-                            <select id="sort-select" class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none text-xs font-bold dark:text-white appearance-none">
-                                <option value="availability">Disponibilité</option>
-                                <option value="name">Nom du local</option>
-                                <option value="duration">Temps libre</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Section État -->
-                <div class="lg:col-span-3">
-                    <label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-4">État de la salle</label>
-                    <div class="flex flex-col space-y-3">
-                        <button id="filter-all" class="state-btn active all w-full py-3 rounded-2xl text-xs font-black transition-all border border-slate-100 dark:border-slate-800">
-                            <i class="fas fa-list mr-2"></i>TOUS LES STATUTS
-                        </button>
-                        <button id="filter-libre" class="state-btn libre w-full py-3 rounded-2xl text-xs font-black transition-all border border-slate-100 dark:border-slate-800">
-                            <i class="fas fa-check-circle mr-2"></i>AFFICHER LIBRES
-                        </button>
-                        <button id="filter-occupe" class="state-btn occupe w-full py-3 rounded-2xl text-xs font-black transition-all border border-slate-100 dark:border-slate-800">
-                            <i class="fas fa-times-circle mr-2"></i>AFFICHER OCCUPÉS
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Résultats -->
-        <div id="results-container" class="transition-opacity duration-300"></div>
-
-        <!-- État vide -->
-        <div id="empty-state" class="hidden text-center py-32">
-            <div class="w-24 h-24 bg-slate-100 dark:bg-slate-900 text-slate-300 dark:text-slate-700 rounded-full flex items-center justify-center mx-auto mb-6">
-                <i class="fas fa-ghost text-4xl"></i>
-            </div>
-            <h3 class="text-xl font-black text-slate-800 dark:text-white mb-2">Aucun local à l'horizon</h3>
-            <p class="text-slate-500 dark:text-slate-400 max-w-xs mx-auto">Ajustez vos filtres ou tentez une autre heure de recherche.</p>
-        </div>
-    </main>
-
-    <!-- Notification Toast (Cute) -->
-    <div id="sync-toast" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-6 py-4 rounded-3xl shadow-2xl flex items-center space-x-4 max-w-sm mx-auto">
-        <div class="w-10 h-10 bg-red-50 dark:bg-red-900/20 text-red-500 rounded-full flex items-center justify-center flex-shrink-0">
-            <i class="fas fa-sync-alt fa-spin"></i>
-        </div>
-        <div>
-            <p class="text-sm font-black text-slate-800 dark:text-white">Synchronisation en cours...</p>
-            <p class="text-[10px] text-slate-500 dark:text-slate-400 leading-tight mt-0.5">Nous récupérons les horaires en direct de l'ÉTS. Les salles apparaîtront d'ici peu !</p>
-        </div>
-    </div>
-
-    <script>
-        // Variables Globales
-        let allRooms = [];
+<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Salles libres ÉTS</title><script src="https://cdn.tailwindcss.com"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"><script>tailwind.config={darkMode:"class",theme:{extend:{colors:{ets:"#ef4444"}}}}</script><style>@import url(https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap);body{font-family:Inter,sans-serif;transition:background-color .3s ease}.room-card{transition:all .2s ease}.room-card:hover{transform:translateY(-4px)}.filter-btn.active{background-color:#ef4444;color:#fff;box-shadow:0 4px 12px rgba(239,68,68,.3)}.state-btn.active.libre{background-color:#22c55e;color:#fff}.state-btn.active.occupe{background-color:#ef4444;color:#fff}.state-btn.active.all{background-color:#64748b;color:#fff}.dark ::-webkit-scrollbar{width:8px}.dark ::-webkit-scrollbar-track{background:#1e293b}.dark ::-webkit-scrollbar-thumb{background:#475569;border-radius:4px}.timeline-bar{height:6px;border-radius:3px;overflow:hidden;display:flex;background:#e2e8f0}.dark .timeline-bar{background:#334155}.timeline-segment{height:100%;transition:width .3s ease}.timeline-free{background:#22c55e}.timeline-busy{background:#ef4444}.timeline-warning{background:#f59e0b}select option{background-color:#fff;color:#000}.dark select option{background-color:#1e293b;color:#fff}#sync-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);transition:all .5s cubic-bezier(.175,.885,.32,1.275);z-index:35}#sync-toast.show{transform:translateX(-50%) translateY(0)}#sync-toast.hidden-by-settings{opacity:0;pointer-events:none}@media (max-width:640px){#sync-toast{bottom:16px;width:calc(100% - 32px);padding:12px 16px}}#settings-panel{position:fixed;top:0;right:0;height:100%;width:100%;max-width:400px;background:#fff;z-index:60;transform:translateX(100%);transition:transform .3s ease-in-out;box-shadow:-10px 0 30px rgba(0,0,0,.1)}.dark #settings-panel{background:#0f172a;box-shadow:-10px 0 30px rgba(0,0,0,.3)}#settings-panel.open{transform:translateX(0)}#settings-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:40;display:none;backdrop-filter:blur(4px)}#settings-overlay.show{display:block}.compact-mode .room-card{padding:1rem}.compact-mode .room-card h3{font-size:1.5rem}.compact-mode .room-card .space-y-4{space-y:2}.high-contrast{--tw-bg-opacity:1!important;background-color:#fff!important;color:#000!important}.high-contrast .bg-slate-50,.high-contrast .bg-white{background-color:#fff!important;border-color:#000!important}.high-contrast .text-slate-700,.high-contrast .text-slate-800,.high-contrast .text-slate-900{color:#000!important;font-weight:700!important}.high-contrast .text-slate-400,.high-contrast .text-slate-500{color:#333!important;font-weight:600!important}.high-contrast .border{border-color:#000!important;border-width:2px!important}.dark.high-contrast{background-color:#000!important;color:#fff!important}.dark.high-contrast .bg-slate-900,.dark.high-contrast .bg-slate-950{background-color:#000!important;border-color:#fff!important}.dark.high-contrast .text-white{color:#fff!important}.dark.high-contrast .border{border-color:#fff!important}.minimal-mode .room-card .pt-4.border-t,.minimal-mode .room-card .text-\[10px\],.minimal-mode .room-card .timeline-bar,.minimal-mode .room-card .w-3.h-3.rounded-full{display:none!important}.minimal-mode .room-card{padding:1.25rem;border-radius:1.5rem}.minimal-mode .room-card h3{font-size:1.75rem;margin-bottom:.25rem}.minimal-mode .room-card .status-text{font-size:.875rem;font-weight:800;text-transform:uppercase}</style></head><body class="min-h-screen pb-12 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors"><header class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-30 transition-colors shadow-sm"><div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between"><div class="flex items-center space-x-3"><div class="bg-red-600 p-2 rounded-xl shadow-lg shadow-red-600/20"><i class="fas fa-bolt text-white"></i></div><h1 class="text-xl font-bold text-slate-800 dark:text-white hidden sm:block">Salles libres<span class="text-red-600 font-black">ÉTS</span></h1></div><div class="flex items-center space-x-2 sm:space-x-4"><button id="quick-find" class="bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm px-3 sm:px-5 py-2 rounded-full font-bold transition-all flex items-center shadow-lg shadow-red-600/30"><i class="fas fa-bolt mr-2"></i>Urgence Étude</button><div class="h-6 w-px bg-slate-200 dark:bg-slate-800 hidden md:block"></div><div class="flex items-center space-x-2"><button id="theme-toggle" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"><i id="theme-icon" class="fas fa-moon"></i></button><div class="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl"><button id="view-grid" class="p-2 rounded-lg transition-all"><i class="fas fa-th-large"></i></button><button id="view-list" class="p-2 rounded-lg transition-all"><i class="fas fa-list"></i></button></div><button id="settings-toggle" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"><i class="fas fa-cog"></i></button></div></div></div></header><div id="settings-overlay"></div><div id="settings-panel" class="p-8 overflow-y-auto"><div class="flex items-center justify-between mb-8"><h2 class="text-2xl font-black text-slate-800 dark:text-white">Paramètres</h2><button id="settings-close" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"><i class="fas fa-times text-xl"></i></button></div><div class="space-y-8"><section><label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-4">Préférences Rapides</label><div class="space-y-4"><div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800"><div><p class="text-sm font-bold text-slate-700 dark:text-slate-200">Mode Compact</p><p class="text-[10px] text-slate-400">Afficher plus de salles</p></div><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="setting-compact" class="sr-only peer"><div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-red-600"></div></label></div><div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800"><div><p class="text-sm font-bold text-slate-700 dark:text-slate-200">Format 24h</p><p class="text-[10px] text-slate-400">Utiliser 13:30 au lieu de 1:30 PM</p></div><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="setting-24h" class="sr-only peer" checked="checked"><div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-red-600"></div></label></div><div><p class="text-sm font-bold text-slate-700 dark:text-slate-200 mb-2">Pavillon par défaut</p><select id="setting-default-pav" class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none text-xs font-bold dark:text-white appearance-none"><option value="ALL">Tous les pavillons</option><option value="A">Pavillon A</option><option value="B">Pavillon B</option><option value="D">Pavillon D</option><option value="E">Pavillon E</option><option value="F">Pavillon F</option></select></div></div></section><section><label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-4">Paramètres Avancés</label><div class="space-y-4"><div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800"><div><p class="text-sm font-bold text-slate-700 dark:text-slate-200">Mode Minimal</p><p class="text-[10px] text-slate-400">Uniquement l'essentiel</p></div><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="setting-minimal" class="sr-only peer"><div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-red-600"></div></label></div><div><div class="flex justify-between mb-2"><p class="text-sm font-bold text-slate-700 dark:text-slate-200">Seuil d'alerte (min)</p><span id="alert-threshold-val" class="text-xs font-black text-red-500">30 min</span></div><input type="range" id="setting-alert-threshold" min="5" max="60" step="5" value="30" class="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-red-600"></div><div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800"><div><p class="text-sm font-bold text-slate-700 dark:text-slate-200">Contraste Élevé</p><p class="text-[10px] text-slate-400">Améliorer la lisibilité</p></div><label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="setting-high-contrast" class="sr-only peer"><div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-red-600"></div></label></div><button id="reset-settings" class="w-full py-3 rounded-2xl text-xs font-black text-red-500 border border-red-100 dark:border-red-900/30 hover:bg-red-50 dark:hover:bg-red-900/10 transition-all">RÉINITIALISER LES PARAMÈTRES</button></div></section><section class="pt-8 border-t border-slate-100 dark:border-slate-800 text-center"><p class="text-xs font-bold text-slate-400 dark:text-slate-500 tracking-wide">© 2026 • Farouk S.</p></section></div></div><main class="max-w-7xl mx-auto px-4 mt-6"><div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 mb-8 shadow-xl shadow-slate-200/50 dark:shadow-none transition-colors"><div class="grid grid-cols-1 lg:grid-cols-12 gap-8"><div class="lg:col-span-4 space-y-6"><div class="flex items-center justify-between"><label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Recherche Intelligente</label><span id="results-count" class="text-[10px] font-black text-red-500 uppercase tracking-widest">0 LOCAUX TROUVÉS</span></div><div class="relative"><i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i><input type="text" id="search-input" placeholder="Local, cours, pavillon..." class="w-full pl-12 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-4 focus:ring-red-500/10 focus:border-red-500 transition-all outline-none text-slate-800 dark:text-white font-medium"></div><div class="grid grid-cols-2 gap-4"><input type="date" id="date-input" class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-red-500 outline-none text-sm font-bold dark:text-white"> <input type="time" id="time-input" class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-red-500 outline-none text-sm font-bold dark:text-white"></div></div><div class="lg:col-span-5"><label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-4">Pavillons & Densité d'occupation</label><div class="grid grid-cols-3 sm:grid-cols-6 gap-3" id="pavillon-filters"><div class="space-y-2"><button data-pav="ALL" class="filter-btn active w-full py-3 rounded-2xl text-sm font-black transition-all bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">Tous</button><div class="h-1 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden"><div id="density-ALL" class="h-full bg-red-500 transition-all duration-1000" style="width:0%"></div></div></div><div class="space-y-2"><button data-pav="A" class="filter-btn w-full py-3 rounded-2xl text-sm font-black transition-all bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">A</button><div class="h-1 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden"><div id="density-A" class="h-full bg-red-500 transition-all duration-1000" style="width:0%"></div></div></div><div class="space-y-2"><button data-pav="B" class="filter-btn w-full py-3 rounded-2xl text-sm font-black transition-all bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">B</button><div class="h-1 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden"><div id="density-B" class="h-full bg-red-500 transition-all duration-1000" style="width:0%"></div></div></div><div class="space-y-2"><button data-pav="D" class="filter-btn w-full py-3 rounded-2xl text-sm font-black transition-all bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">D</button><div class="h-1 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden"><div id="density-D" class="h-full bg-red-500 transition-all duration-1000" style="width:0%"></div></div></div><div class="space-y-2"><button data-pav="E" class="filter-btn w-full py-3 rounded-2xl text-sm font-black transition-all bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">E</button><div class="h-1 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden"><div id="density-E" class="h-full bg-red-500 transition-all duration-1000" style="width:0%"></div></div></div><div class="space-y-2"><button data-pav="F" class="filter-btn w-full py-3 rounded-2xl text-sm font-black transition-all bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">F</button><div class="h-1 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden"><div id="density-F" class="h-full bg-red-500 transition-all duration-1000" style="width:0%"></div></div></div></div><div class="grid grid-cols-2 gap-4 mt-6"><div><label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-2">Étage</label><select id="floor-filter" class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none text-xs font-bold dark:text-white appearance-none"><option value="ALL">Tous les étages</option><option value="1">1er étage</option><option value="2">2e étage</option><option value="3">3e étage</option><option value="4">4e étage</option></select></div><div><label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-2">Trier par</label><select id="sort-select" class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl outline-none text-xs font-bold dark:text-white appearance-none"><option value="availability">Disponibilité</option><option value="name">Nom du local</option><option value="duration">Temps libre</option></select></div></div></div><div class="lg:col-span-3"><label class="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mb-4">État de la salle</label><div class="flex flex-col space-y-3"><button id="filter-all" class="state-btn active all w-full py-3 rounded-2xl text-xs font-black transition-all border border-slate-100 dark:border-slate-800"><i class="fas fa-list mr-2"></i>TOUS LES STATUTS</button><button id="filter-libre" class="state-btn libre w-full py-3 rounded-2xl text-xs font-black transition-all border border-slate-100 dark:border-slate-800"><i class="fas fa-check-circle mr-2"></i>AFFICHER LIBRES</button><button id="filter-occupe" class="state-btn occupe w-full py-3 rounded-2xl text-xs font-black transition-all border border-slate-100 dark:border-slate-800"><i class="fas fa-times-circle mr-2"></i>AFFICHER OCCUPÉS</button></div></div></div></div><div id="results-container" class="transition-opacity duration-300"></div><div id="empty-state" class="hidden text-center py-32"><div class="w-24 h-24 bg-slate-100 dark:bg-slate-900 text-slate-300 dark:text-slate-700 rounded-full flex items-center justify-center mx-auto mb-6"><i class="fas fa-ghost text-4xl"></i></div><h3 class="text-xl font-black text-slate-800 dark:text-white mb-2">Aucun local à l'horizon</h3><p class="text-slate-500 dark:text-slate-400 max-w-xs mx-auto">Ajustez vos filtres ou tentez une autre heure de recherche.</p></div></main><div id="sync-toast" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-6 py-4 rounded-3xl shadow-2xl flex items-center space-x-4 max-w-sm mx-auto"><div class="w-10 h-10 bg-red-50 dark:bg-red-900/20 text-red-500 rounded-full flex items-center justify-center flex-shrink-0"><i class="fas fa-sync-alt fa-spin"></i></div><div><p class="text-sm font-black text-slate-800 dark:text-white">Synchronisation en cours...</p><p class="text-[10px] text-slate-500 dark:text-slate-400 leading-tight mt-0.5">Nous récupérons les horaires en direct de l'ÉTS. Les salles apparaîtront d'ici peu !</p></div></div><script>let allRooms = [];
         let currentPavillon = 'ALL';
         let currentView = localStorage.getItem('viewMode') || 'grid';
         let showLibre = true;
         let showOccupe = true;
         let syncCheckInterval = null;
 
-        // Settings State
         let settings = {
             compact: false,
             use24h: true,
             defaultPav: 'ALL',
             alertThreshold: 30,
-            highContrast: false
+            highContrast: false,
+            minimal: false
         };
 
         window.onload = function() {
@@ -384,21 +34,21 @@
         function applySettings() {
             document.body.classList.toggle('compact-mode', settings.compact);
             document.body.classList.toggle('high-contrast', settings.highContrast);
+            document.body.classList.toggle('minimal-mode', settings.minimal);
+            
             document.getElementById('setting-compact').checked = settings.compact;
             document.getElementById('setting-24h').checked = settings.use24h;
             document.getElementById('setting-default-pav').value = settings.defaultPav;
             document.getElementById('setting-alert-threshold').value = settings.alertThreshold;
             document.getElementById('alert-threshold-val').innerText = settings.alertThreshold + " min";
             document.getElementById('setting-high-contrast').checked = settings.highContrast;
+            document.getElementById('setting-minimal').checked = settings.minimal;
             
             if (currentPavillon === 'ALL' && settings.defaultPav !== 'ALL') {
                 currentPavillon = settings.defaultPav;
                 document.querySelectorAll('.filter-btn').forEach(btn => {
-                    if (btn.getAttribute('data-pav') === currentPavillon) {
-                        btn.classList.add('active');
-                    } else {
-                        btn.classList.remove('active');
-                    }
+                    if (btn.getAttribute('data-pav') === currentPavillon) btn.classList.add('active');
+                    else btn.classList.remove('active');
                 });
             }
         }
@@ -444,7 +94,6 @@
             document.getElementById('sort-select').onchange = filterAndDisplay;
             document.getElementById('quick-find').onclick = runQuickFind;
 
-            // Settings Events
             document.getElementById('settings-toggle').onclick = () => {
                 document.getElementById('settings-panel').classList.add('open');
                 document.getElementById('settings-overlay').classList.add('show');
@@ -462,9 +111,10 @@
             };
             document.getElementById('setting-alert-threshold').onchange = saveSettings;
             document.getElementById('setting-high-contrast').onchange = (e) => { settings.highContrast = e.target.checked; saveSettings(); };
+            document.getElementById('setting-minimal').onchange = (e) => { settings.minimal = e.target.checked; saveSettings(); };
             document.getElementById('reset-settings').onclick = () => {
                 if (confirm("Réinitialiser tous les paramètres ?")) {
-                    settings = { compact: false, use24h: true, defaultPav: 'ALL', alertThreshold: 30, highContrast: false };
+                    settings = { compact: false, use24h: true, defaultPav: 'ALL', alertThreshold: 30, highContrast: false, minimal: false };
                     saveSettings();
                 }
             };
@@ -479,22 +129,19 @@
             });
 
             document.getElementById('filter-all').onclick = function() {
-                showLibre = true;
-                showOccupe = true;
+                showLibre = true; showOccupe = true;
                 document.querySelectorAll('.state-btn').forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
                 filterAndDisplay();
             };
             document.getElementById('filter-libre').onclick = function() {
-                showLibre = true;
-                showOccupe = false;
+                showLibre = true; showOccupe = false;
                 document.querySelectorAll('.state-btn').forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
                 filterAndDisplay();
             };
             document.getElementById('filter-occupe').onclick = function() {
-                showLibre = false;
-                showOccupe = true;
+                showLibre = false; showOccupe = true;
                 document.querySelectorAll('.state-btn').forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
                 filterAndDisplay();
@@ -510,46 +157,29 @@
         async function fetchRooms() {
             const date = document.getElementById('date-input').value;
             const time = document.getElementById('time-input').value;
-            const countEl = document.getElementById('results-count');
-            
             if (!date || !time) return;
-            
             try {
                 const res = await fetch(`/api/v1/available-rooms?date=${date}&time=${time}`);
                 if (res.ok) {
                     allRooms = await res.json();
-                    
                     if (allRooms.length === 0) {
                         showSyncToast(true);
-                        if (!syncCheckInterval) {
-                            syncCheckInterval = setInterval(fetchRooms, 5000);
-                        }
+                        if (!syncCheckInterval) syncCheckInterval = setInterval(fetchRooms, 5000);
                     } else {
                         showSyncToast(false);
-                        if (syncCheckInterval) {
-                            clearInterval(syncCheckInterval);
-                            syncCheckInterval = null;
-                        }
+                        if (syncCheckInterval) { clearInterval(syncCheckInterval); syncCheckInterval = null; }
                         updateDensities();
                         filterAndDisplay();
                     }
-                } else {
-                    countEl.innerText = "ERREUR API";
                 }
-            } catch (err) {
-                countEl.innerText = "ERREUR CONNEXION";
-            }
+            } catch (err) {}
         }
 
         function showSyncToast(show) {
             const toast = document.getElementById('sync-toast');
             const countEl = document.getElementById('results-count');
-            if (show) {
-                toast.classList.add('show');
-                countEl.innerText = "SYNCHRONISATION...";
-            } else {
-                toast.classList.remove('show');
-            }
+            if (show) { toast.classList.add('show'); countEl.innerText = "SYNCHRONISATION..."; }
+            else { toast.classList.remove('show'); }
         }
 
         function updateDensities() {
@@ -566,24 +196,19 @@
             const search = document.getElementById('search-input').value.toUpperCase();
             const floor = document.getElementById('floor-filter').value;
             const sort = document.getElementById('sort-select').value;
-
             let filtered = allRooms.filter(r => {
-                const matchesSearch = r.room_name.includes(search) || 
-                                    (r.current_course_code && r.current_course_code.toUpperCase().includes(search)) ||
-                                    (r.next_course_code && r.next_course_code.toUpperCase().includes(search));
+                const matchesSearch = r.room_name.includes(search) || (r.current_course_code && r.current_course_code.toUpperCase().includes(search));
                 const matchesPav = currentPavillon === 'ALL' || r.room_name.startsWith(currentPavillon);
                 const matchesFloor = floor === 'ALL' || (r.room_name.split('-')[1] || '').startsWith(floor);
                 const matchesState = (r.is_available && showLibre) || (!r.is_available && showOccupe);
                 return matchesSearch && matchesPav && matchesFloor && matchesState;
             });
-
             filtered.sort((a, b) => {
                 if (sort === 'name') return a.room_name.localeCompare(b.room_name);
                 if (sort === 'duration') return (b.remaining_duration_minutes || 0) - (a.remaining_duration_minutes || 0);
                 if (a.is_available !== b.is_available) return a.is_available ? -1 : 1;
                 return (b.remaining_duration_minutes || 0) - (a.remaining_duration_minutes || 0);
             });
-
             render(filtered);
         }
 
@@ -591,12 +216,7 @@
             const container = document.getElementById('results-container');
             const empty = document.getElementById('empty-state');
             document.getElementById('results-count').innerText = rooms.length + " LOCAUX TROUVÉS";
-
-            if (rooms.length === 0) {
-                container.innerHTML = "";
-                empty.classList.remove('hidden');
-                return;
-            }
+            if (rooms.length === 0) { container.innerHTML = ""; empty.classList.remove('hidden'); return; }
             empty.classList.add('hidden');
 
             if (currentView === 'grid') {
@@ -605,14 +225,13 @@
                     const isLab = r.room_name.startsWith('A') || r.room_name.startsWith('B');
                     const courseCode = r.is_available ? (r.next_course_code || 'Aucun cours') : (r.current_course_code || 'Occupé');
                     const isWarning = r.is_available && r.remaining_duration_minutes <= settings.alertThreshold;
-                    
                     html += `
                         <div class="room-card bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm hover:shadow-xl transition-all relative overflow-hidden">
                             <div class="flex justify-between items-start mb-6">
                                 <div>
                                     <h3 class="text-3xl font-black text-slate-800 dark:text-white tracking-tighter">${r.room_name}</h3>
                                     <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">${isLab ? 'Labo' : 'Classe'}</p>
-                                    <p class="text-xs font-bold ${r.is_available ? (isWarning ? 'text-amber-500' : 'text-slate-500') : 'text-red-500'} mt-1">${courseCode}</p>
+                                    <p class="status-text text-xs font-bold ${r.is_available ? (isWarning ? 'text-amber-500' : 'text-slate-500') : 'text-red-500'} mt-1">${courseCode}</p>
                                 </div>
                                 <div class="w-3 h-3 rounded-full ${r.is_available ? (isWarning ? 'bg-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.6)]' : 'bg-green-500 shadow-[0_0_12px_rgba(34,197,94,0.6)]') : 'bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.6)]'}"></div>
                             </div>
@@ -633,8 +252,7 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    `;
+                        </div>`;
                 });
                 html += '</div>';
                 container.innerHTML = html;
@@ -658,8 +276,7 @@
                                 </div>
                                 <div class="w-3 h-3 rounded-full ${r.is_available ? (isWarning ? 'bg-amber-500' : 'bg-green-500') : 'bg-red-500'}"></div>
                             </div>
-                        </div>
-                    `;
+                        </div>`;
                 });
                 html += '</div>';
                 container.innerHTML = html;
@@ -667,54 +284,35 @@
         }
 
         function getTimeline(room, isWarning) {
-            let segments = "";
-            if (room.is_available) {
-                segments = `<div class="timeline-segment ${isWarning ? 'timeline-warning' : 'timeline-free'}" style="width: 100%"></div>`;
-            } else {
-                segments = `<div class="timeline-segment timeline-busy" style="width: 100%"></div>`;
-            }
+            let segments = room.is_available ? `<div class="timeline-segment ${isWarning ? 'timeline-warning' : 'timeline-free'}" style="width: 100%"></div>` : `<div class="timeline-segment timeline-busy" style="width: 100%"></div>`;
             return `<div class="timeline-bar">${segments}</div>`;
         }
 
         function formatTime(t) {
             if (!t) return "--:--";
-            let [h, m] = t.split(':');
-            h = parseInt(h);
-            
+            let [h, m] = t.split(':'); h = parseInt(h);
             if (!settings.use24h) {
                 const ampm = h >= 12 ? 'PM' : 'AM';
-                h = h % 12;
-                h = h ? h : 12; // l'heure 0 devient 12
+                h = h % 12; h = h ? h : 12;
                 return `${h}:${m} ${ampm}`;
             }
             return `${h.toString().padStart(2, '0')}:${m}`;
         }
 
         function setView(view) {
-            currentView = view;
-            localStorage.setItem('viewMode', view);
-            updateViewButtons();
-            filterAndDisplay();
+            currentView = view; localStorage.setItem('viewMode', view);
+            updateViewButtons(); filterAndDisplay();
         }
 
         function updateViewButtons() {
             document.getElementById('view-grid').classList.toggle('bg-white', currentView === 'grid');
             document.getElementById('view-grid').classList.toggle('dark:bg-slate-700', currentView === 'grid');
-            document.getElementById('view-grid').classList.toggle('shadow-sm', currentView === 'grid');
             document.getElementById('view-list').classList.toggle('bg-white', currentView === 'list');
             document.getElementById('view-list').classList.toggle('dark:bg-slate-700', currentView === 'list');
-            document.getElementById('view-list').classList.toggle('shadow-sm', currentView === 'list');
         }
 
         function runQuickFind() {
             const free = allRooms.filter(r => r.is_available).sort((a, b) => (b.remaining_duration_minutes || 0) - (a.remaining_duration_minutes || 0));
-            if (free.length > 0) {
-                document.getElementById('search-input').value = free[0].room_name;
-                filterAndDisplay();
-            } else {
-                alert("Aucune salle libre actuellement !");
-            }
-        }
-    </script>
-</body>
-</html>
+            if (free.length > 0) { document.getElementById('search-input').value = free[0].room_name; filterAndDisplay(); }
+            else { alert("Aucune salle libre actuellement !"); }
+        }</script></body></html>
